@@ -33,20 +33,21 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     business
       ? supabase.from('bookings').select('*', { count: 'exact', head: true })
-          .eq('business_id', business.id).gte('date', mesInicio)
+          .eq('business_id', business.id).gte('booking_date', mesInicio)
       : Promise.resolve({ count: 0 }),
     business
       ? supabase.from('bookings').select('*', { count: 'exact', head: true })
-          .eq('business_id', business.id).eq('status', 'pending').gte('date', hoy)
+          .eq('business_id', business.id).eq('status', 'pending').gte('booking_date', hoy)
       : Promise.resolve({ count: 0 }),
     business
       ? supabase.from('clients').select('*', { count: 'exact', head: true })
           .eq('business_id', business.id)
       : Promise.resolve({ count: 0 }),
     business
-      ? supabase.from('bookings').select('date, service, customer_name, status')
-          .eq('business_id', business.id).gte('date', hoy)
-          .neq('status', 'cancelled').order('date', { ascending: true }).limit(5)
+      ? supabase.from('bookings').select('booking_date, booking_time, service_name, client_name, status')
+          .eq('business_id', business.id).gte('booking_date', hoy)
+          .neq('status', 'cancelled').order('booking_date', { ascending: true })
+          .order('booking_time', { ascending: true }).limit(5)
       : Promise.resolve({ data: [] }),
     business
       ? supabase.from('licenses').select('plan').eq('business_id', business.id).maybeSingle()
@@ -207,9 +208,10 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {(proximasCitas as { date: string; service: string; customer_name: string; status: string }[]).map((cita, i) => {
-                  const fecha = new Date(cita.date + 'T00:00:00')
+                {(proximasCitas as { booking_date: string; booking_time: string; service_name: string; client_name: string; status: string }[]).map((cita, i) => {
+                  const fecha = new Date(cita.booking_date + 'T12:00:00')
                   const label = fecha.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' })
+                  const hora  = cita.booking_time?.slice(0, 5)
                   return (
                     <div key={i} className="flex items-center justify-between py-2.5 px-3 rounded-xl"
                          style={{ background: 'var(--bg-elevated)' }}>
@@ -224,10 +226,10 @@ export default async function DashboardPage() {
                         </div>
                         <div>
                           <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                            {cita.customer_name}
+                            {cita.client_name}
                           </p>
                           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                            {cita.service} · {label}
+                            {cita.service_name} · {label}{hora ? ` · ${hora}` : ''}
                           </p>
                         </div>
                       </div>
