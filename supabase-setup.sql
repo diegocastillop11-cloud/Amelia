@@ -19,6 +19,12 @@ CREATE POLICY "Owners ven su propio perfil"
   ON public.owners FOR SELECT
   USING (auth.uid() = id);
 
+CREATE POLICY "Superadmin ve todos los owners"
+  ON public.owners FOR SELECT
+  USING (
+    auth.uid() IN (SELECT id FROM public.owners WHERE is_superadmin = true)
+  );
+
 CREATE POLICY "Owners actualizan su propio perfil"
   ON public.owners FOR UPDATE
   USING (auth.uid() = id);
@@ -63,6 +69,12 @@ ALTER TABLE public.businesses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Owners gestionan sus negocios"
   ON public.businesses FOR ALL
   USING (auth.uid() = owner_id);
+
+CREATE POLICY "Superadmin ve todos los negocios"
+  ON public.businesses FOR ALL
+  USING (
+    auth.uid() IN (SELECT id FROM public.owners WHERE is_superadmin = true)
+  );
 
 -- 4. SITES
 CREATE TABLE IF NOT EXISTS public.sites (
