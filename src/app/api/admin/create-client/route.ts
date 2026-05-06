@@ -15,7 +15,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
     }
 
-    const { email, full_name, business_name, category, slug } = await req.json()
+    const { email, full_name, business_name, category, slug, password } = await req.json()
+    if (!password || password.length < 8)
+      return NextResponse.json({ error: 'La contraseña debe tener al menos 8 caracteres' }, { status: 400 })
 
     // Crear usuario en Supabase Auth usando service role
     const { createClient: createSupabase } = await import('@supabase/supabase-js')
@@ -28,6 +30,7 @@ export async function POST(req: Request) {
     const { data: created, error: createError } =
       await adminClient.auth.admin.createUser({
         email,
+        password,
         email_confirm: true,
         user_metadata: { full_name },
       })
@@ -66,17 +69,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: bizError.message }, { status: 500 })
     }
 
-    // Generar link de invitación para que el cliente establezca su contraseña
-    const { data: linkData, error: linkError } =
-      await adminClient.auth.admin.generateLink({
-        type: 'invite',
-        email,
-        options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/dashboard` },
-      })
-
-    const inviteLink = linkError ? null : linkData?.properties?.action_link ?? null
-
-    return NextResponse.json({ success: true, user_id: userId, invite_link: inviteLink })
+    return NextResponse.json({ success: true, user_id: userId })
   } catch (error) {
     console.error('Error creando cliente:', error)
     return NextResponse.json({ error: 'Error interno' }, { status: 500 })
