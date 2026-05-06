@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { MODULES_CONFIG, PLAN_DEFAULTS } from '@/lib/modules'
 
 const PLANES = [
   {
@@ -10,19 +11,7 @@ const PLANES = [
     periodo: 'siempre gratis',
     descripcion: 'Para empezar a digitalizarte.',
     color: '#6b7280',
-    features: [
-      'Sitio web generado con IA',
-      '1 plantilla activa',
-      'Agenda de citas online',
-      'Chat Amelia para clientes',
-      'Hasta 30 citas al mes',
-      'Galería de hasta 6 imágenes',
-    ],
-    limitaciones: [
-      'Sin dominio personalizado',
-      'Sin métricas avanzadas',
-      'Sin recordatorios automáticos',
-    ],
+    extras: ['Sitio web generado con IA', 'Chat Amelia para clientes'],
   },
   {
     id: 'pro',
@@ -32,18 +21,7 @@ const PLANES = [
     descripcion: 'Para negocios que quieren crecer.',
     color: '#6366f1',
     popular: true,
-    features: [
-      'Todo lo de Free',
-      'Citas ilimitadas',
-      'Galería ilimitada',
-      'Recordatorios automáticos por email',
-      'Métricas y estadísticas',
-      'Múltiples plantillas',
-      'Soporte prioritario',
-    ],
-    limitaciones: [
-      'Sin dominio personalizado',
-    ],
+    extras: ['Citas ilimitadas', 'Galería ilimitada', 'Soporte prioritario'],
   },
   {
     id: 'premium',
@@ -52,15 +30,7 @@ const PLANES = [
     periodo: 'CLP / mes',
     descripcion: 'Presencia profesional completa.',
     color: '#f59e0b',
-    features: [
-      'Todo lo de Pro',
-      'Dominio personalizado',
-      'Reactivación de clientes inactivos',
-      'Reportes mensuales automáticos',
-      'Integración con redes sociales',
-      'Soporte dedicado 24/7',
-    ],
-    limitaciones: [],
+    extras: ['Dominio personalizado', 'Reportes mensuales', 'Soporte 24/7'],
   },
 ]
 
@@ -194,19 +164,33 @@ export default function UpgradePage() {
                 </button>
               )}
 
-              {/* Features */}
-              <ul className="space-y-2">
-                {plan.features.map((f, i) => (
+              {/* Módulos incluidos */}
+              <div className="mb-3">
+                <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Módulos
+                </p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {MODULES_CONFIG.map(m => {
+                    const included = PLAN_DEFAULTS[plan.id]?.[m.key] ?? false
+                    return (
+                      <div key={m.key} className="flex items-center gap-1.5"
+                           style={{ opacity: included ? 1 : 0.35 }}>
+                        <span style={{ fontSize: '0.8rem' }}>{included ? '✓' : '✗'}</span>
+                        <span className="text-xs" style={{ color: included ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+                          {m.icon} {m.label}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Extras */}
+              <ul className="space-y-1.5">
+                {(plan as { extras?: string[] }).extras?.map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm"
                       style={{ color: 'var(--text-secondary)' }}>
                     <span style={{ color: plan.color, marginTop: 1, flexShrink: 0 }}>✓</span>
-                    {f}
-                  </li>
-                ))}
-                {plan.limitaciones.map((f, i) => (
-                  <li key={`l-${i}`} className="flex items-start gap-2 text-sm"
-                      style={{ color: 'var(--text-muted)' }}>
-                    <span style={{ marginTop: 1, flexShrink: 0 }}>–</span>
                     {f}
                   </li>
                 ))}

@@ -14,13 +14,24 @@ export default async function DashboardLayout({
 
   const isSuperAdmin = user.email === process.env.SUPERADMIN_EMAIL
 
+  let plan = 'free'
+  let modules: Record<string, boolean> | null = null
+
+  if (!isSuperAdmin) {
+    const { data: biz } = await supabase.from('businesses').select('id').eq('owner_id', user.id).maybeSingle()
+    if (biz) {
+      const { data: lic } = await supabase.from('licenses')
+        .select('plan, modules').eq('business_id', biz.id).maybeSingle()
+      if (lic) { plan = lic.plan; modules = lic.modules }
+    }
+  }
+
   return (
     <div className="flex h-screen" style={{ background: 'var(--bg-base)' }}>
-      {/* Superadmin ve su sidebar especial con switcher admin↔cliente */}
       {isSuperAdmin ? (
         <AdminSidebar />
       ) : (
-        <Sidebar userEmail={user.email ?? ''} />
+        <Sidebar userEmail={user.email ?? ''} plan={plan} modules={modules} />
       )}
       <main className="flex-1 overflow-y-auto">{children}</main>
     </div>

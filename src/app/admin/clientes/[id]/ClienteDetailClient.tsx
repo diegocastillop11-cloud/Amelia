@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { MODULES_CONFIG, PLAN_DEFAULTS, ModuleKey } from '@/lib/modules'
 
 const PLAN_COLORS: Record<string, string> = {
   free: '#6b7280', pro: '#6366f1', premium: '#f59e0b',
@@ -13,7 +14,7 @@ interface Props {
     is_published: boolean; primary_color: string | null; created_at: string
     owners: { id: string; full_name: string | null; email: string } | null
   }
-  license: { plan: string; expires_at: string | null } | null
+  license: { plan: string; expires_at: string | null; modules: Record<string, boolean> | null } | null
   upgradeRequest: { id: string; requested_plan: string; status: string; created_at: string } | null
   totalBookings: number
   totalClients: number
@@ -21,8 +22,12 @@ interface Props {
 
 export default function ClienteDetailClient({ business, license, upgradeRequest, totalBookings, totalClients }: Props) {
   const [plan, setPlan]           = useState(license?.plan ?? 'free')
+  const [modules, setModules]     = useState<Record<string, boolean>>(
+    license?.modules ?? PLAN_DEFAULTS[license?.plan ?? 'free']
+  )
   const [published, setPublished] = useState(business.is_published)
   const [saving, setSaving]       = useState(false)
+  const [togglingMod, setTogglingMod] = useState<string | null>(null)
   const [msg, setMsg]             = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
   async function actualizarPlan(nuevoPlan: string) {
@@ -38,11 +43,27 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
     })
     if (res.ok) {
       setPlan(nuevoPlan)
+      setModules(PLAN_DEFAULTS[nuevoPlan])
       setMsg({ type: 'ok', text: `Plan actualizado a ${nuevoPlan.toUpperCase()}` })
     } else {
       setMsg({ type: 'err', text: 'Error al actualizar el plan' })
     }
     setSaving(false)
+  }
+
+  async function toggleModule(key: ModuleKey, value: boolean) {
+    setTogglingMod(key)
+    const res = await fetch('/api/admin/toggle-module', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ business_id: business.id, module_key: key, enabled: value }),
+    })
+    if (res.ok) {
+      setModules(prev => ({ ...prev, [key]: value }))
+    } else {
+      setMsg({ type: 'err', text: 'Error al cambiar módulo' })
+    }
+    setTogglingMod(null)
   }
 
   async function togglePublish() {
@@ -60,7 +81,6 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
     setSaving(false)
   }
 
-  const color = business.primary_color ?? '#6366f1'
   const planColor = PLAN_COLORS[plan] ?? '#6b7280'
 
   return (
@@ -101,7 +121,7 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
 
       <div className="space-y-4">
 
-        {/* Stats rápidas */}
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Citas totales', value: totalBookings, icon: '📅' },
@@ -145,7 +165,7 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2 mb-1">
             {(['free', 'pro', 'premium'] as const).map(p => (
               <button
                 key={p}
@@ -163,9 +183,56 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
               </button>
             ))}
           </div>
-          <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
-            Cambia el plan del cliente directamente. Se aplica de inmediato.
+          <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+            Al cambiar el plan se resetean los módulos a los valores por defecto.
           </p>
+        </div>
+
+        {/* Módulos */}
+        <div className="card p-6">
+          <h2 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>
+            Módulos activos
+          </h2>
+          <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
+            Activa o desactiva funcionalidades individualmente para este cliente.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {MODULES_CONFIG.map(m => {
+              const active = modules[m.key] ?? false
+              const toggling = togglingMod === m.key
+              return (
+                <button
+                  key={m.key}
+                  onClick={() => toggleModule(m.key, !active)}
+                  disabled={toggling}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '0.75rem 1rem', borderRadius: 12, cursor: 'pointer',
+                    fontFamily: 'inherit', transition: 'all 0.15s',
+                    background: active ? 'rgba(99,102,241,0.08)' : 'rgba(255,255,255,0.02)',
+                    border: `1.5px solid ${active ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                    opacity: toggling ? 0.6 : 1,
+                  }}>
+                  <span style={{ fontSize: '1rem' }}>{m.icon}</span>
+                  <span style={{
+                    flex: 1, fontSize: '0.8125rem', fontWeight: 500, textAlign: 'left',
+                    color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                  }}>
+                    {m.label}
+                  </span>
+                  <span style={{
+                    fontSize: '0.6875rem', fontWeight: 700, padding: '2px 8px',
+                    borderRadius: 20,
+                    background: active ? 'rgba(110,231,183,0.12)' : 'rgba(255,255,255,0.05)',
+                    color: active ? '#6ee7b7' : 'var(--text-muted)',
+                    border: `1px solid ${active ? 'rgba(110,231,183,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                  }}>
+                    {active ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {/* Info del negocio */}
@@ -190,6 +257,11 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
           </dl>
         </div>
 
+        {/* Guía dominio — solo premium */}
+        {plan === 'premium' && (
+          <DominioPasos slug={business.slug} />
+        )}
+
         {/* Acciones */}
         <div className="card p-6">
           <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-secondary)' }}>Acciones</h2>
@@ -209,6 +281,183 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
         </div>
 
       </div>
+    </div>
+  )
+}
+
+// ─── Guía paso a paso: dominio personalizado ─────────────────────────────────
+
+function CopyBtn({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1800)
+  }
+  return (
+    <button onClick={copy}
+      style={{
+        marginLeft: 8, padding: '2px 10px', borderRadius: 6, fontSize: '0.6875rem',
+        fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+        background: copied ? 'rgba(110,231,183,0.15)' : 'rgba(255,255,255,0.06)',
+        border: `1px solid ${copied ? 'rgba(110,231,183,0.3)' : 'rgba(255,255,255,0.1)'}`,
+        color: copied ? '#6ee7b7' : 'var(--text-muted)',
+        transition: 'all 0.2s',
+      }}>
+      {copied ? '✓' : 'Copiar'}
+    </button>
+  )
+}
+
+const PASOS = [
+  {
+    num: 1,
+    titulo: 'Comprar el dominio',
+    desc: 'Para dominios .cl usa NIC Chile (nic.cl). Para .com, Namecheap o Cloudflare Registrar son los más baratos. Registra el dominio a nombre del cliente o a nombre tuyo si lo vas a gestionar.',
+    links: [
+      { label: 'NIC Chile (.cl)', url: 'https://www.nic.cl' },
+      { label: 'Namecheap (.com)', url: 'https://www.namecheap.com' },
+      { label: 'Cloudflare Registrar', url: 'https://www.cloudflare.com/products/registrar/' },
+    ],
+  },
+  {
+    num: 2,
+    titulo: 'Agregar el dominio en Vercel',
+    desc: 'Ve a tu proyecto en Vercel → Settings → Domains → Add. Escribe el dominio (ej: www.tucliente.cl) y haz click en Add. Vercel te mostrará los registros DNS que debes configurar.',
+    links: [
+      { label: 'Abrir Vercel Dashboard', url: 'https://vercel.com/dashboard' },
+    ],
+  },
+  {
+    num: 3,
+    titulo: 'Configurar DNS',
+    desc: 'En el panel DNS del registrador, crea estos registros según lo que indica Vercel:',
+    dns: [
+      { tipo: 'CNAME', nombre: 'www', valor: 'cname.vercel-dns.com' },
+      { tipo: 'A', nombre: '@', valor: '76.76.21.21' },
+    ],
+  },
+  {
+    num: 4,
+    titulo: 'Esperar propagación',
+    desc: 'Los cambios de DNS pueden tardar entre 5 minutos y 48 horas. En la práctica, con Cloudflare o NIC Chile suele ser menos de 30 minutos. Puedes verificar el estado directamente en Vercel → Domains.',
+  },
+  {
+    num: 5,
+    titulo: 'Verificar y avisar al cliente',
+    desc: 'Cuando Vercel muestre el dominio en verde (Valid), el sitio ya está activo en el dominio personalizado. Avisa al cliente y comparte la URL.',
+  },
+]
+
+function DominioPasos({ slug }: { slug: string }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="card p-6"
+         style={{ border: '1.5px solid rgba(245,158,11,0.25)', background: 'rgba(245,158,11,0.04)' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit',
+        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: '1rem' }}>🌐</span>
+          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fcd34d' }}>
+            Guía: Configurar dominio personalizado
+          </span>
+        </div>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div style={{ marginTop: '1.25rem' }}>
+          <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>
+            Sitio actual: <span className="mono">/sitio/{slug}</span> — sigue estos pasos para conectar un dominio propio.
+          </p>
+
+          <div className="space-y-5">
+            {PASOS.map(paso => (
+              <div key={paso.num} style={{ display: 'flex', gap: 14 }}>
+                {/* Número */}
+                <div style={{
+                  width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                  background: 'rgba(245,158,11,0.15)', border: '1.5px solid rgba(245,158,11,0.35)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.75rem', fontWeight: 800, color: '#fcd34d',
+                }}>
+                  {paso.num}
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+                    {paso.titulo}
+                  </p>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                    {paso.desc}
+                  </p>
+
+                  {/* DNS records */}
+                  {paso.dns && (
+                    <div style={{ marginTop: 10, borderRadius: 10, overflow: 'hidden',
+                                   border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
+                            {['Tipo', 'Nombre', 'Valor'].map(h => (
+                              <th key={h} style={{ padding: '6px 12px', textAlign: 'left',
+                                                    color: 'var(--text-muted)', fontWeight: 600,
+                                                    fontSize: '0.6875rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paso.dns.map((row, i) => (
+                            <tr key={i} style={{ borderBottom: i < paso.dns!.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                              <td style={{ padding: '7px 12px' }}>
+                                <span style={{ fontSize: '0.6875rem', fontWeight: 700, padding: '2px 7px',
+                                               borderRadius: 6, background: 'rgba(99,102,241,0.15)',
+                                               color: '#a5b4fc' }}>
+                                  {row.tipo}
+                                </span>
+                              </td>
+                              <td style={{ padding: '7px 12px', color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                                {row.nombre}
+                              </td>
+                              <td style={{ padding: '7px 12px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
+                                {row.valor}
+                                <CopyBtn text={row.valor} />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Links */}
+                  {paso.links && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                      {paso.links.map(l => (
+                        <a key={l.url} href={l.url} target="_blank" rel="noopener"
+                           style={{
+                             fontSize: '0.75rem', padding: '3px 10px', borderRadius: 8,
+                             background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                             color: 'var(--text-secondary)', textDecoration: 'none',
+                           }}>
+                          {l.label} ↗
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

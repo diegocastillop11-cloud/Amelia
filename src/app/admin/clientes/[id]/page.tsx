@@ -16,7 +16,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
 
   const [{ data: license }, { data: upgradeReq }, { count: totalBookings }, { count: totalClients }] =
     await Promise.all([
-      supabase.from('licenses').select('plan, expires_at')
+      supabase.from('licenses').select('plan, expires_at, modules')
         .eq('business_id', params.id).maybeSingle(),
       owner
         ? supabase.from('upgrade_requests').select('id, requested_plan, status, created_at')
