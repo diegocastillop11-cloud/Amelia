@@ -11,7 +11,7 @@ interface SiteContent {
   hero: { title: string; subtitle: string; cta: string }
   about: { text: string }
   services: { name: string; description: string; price: string }[]
-  contact: { cta: string }
+  contact: { cta: string; phone?: string; address?: string; whatsapp?: string; instagram?: string }
   footer: { tagline: string }
 }
 
@@ -54,7 +54,11 @@ Responde SOLO en JSON válido con exactamente esta estructura, sin texto adicion
     }
   ],
   "contact": {
-    "cta": "Llamada a la acción para contacto"
+    "cta": "Llamada a la acción para contacto",
+    "phone": "Teléfono si aparece en la descripción, sino cadena vacía",
+    "whatsapp": "Número WhatsApp si aparece en la descripción, sino cadena vacía",
+    "address": "Dirección si aparece en la descripción, sino cadena vacía",
+    "instagram": "Handle de Instagram si aparece (ej: @minegocio), sino cadena vacía"
   },
   "footer": {
     "tagline": "Frase corta memorable del negocio"

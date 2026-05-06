@@ -382,13 +382,98 @@ export function SiteRenderer({
         )}
 
         {/* ── CONTACTO CTA ── */}
-        <div dangerouslySetInnerHTML={{ __html:
-          `<div style="padding:5rem 2rem;text-align:center;background:${t.bold?'rgba(255,255,255,0.04)':t.dark?'#0d0d14':t.glass?'rgba(255,255,255,0.04)':t.vib?'rgba(0,0,0,0.15)':'#f9fafb'}">
-            <h2 style="font-size:clamp(1.625rem,4vw,2.25rem);font-weight:900;color:${t.fg};margin:0 0 0.75rem;letter-spacing:${t.bold?'-0.02em':'normal'}">${content.contact?.cta ?? '¿Listo para reservar?'}</h2>
-            <p style="color:${t.muted};font-size:1.0625rem;margin:0 auto 2.25rem;max-width:480px;line-height:1.7">Agenda en minutos, sin llamadas ni esperas.</p>
-            <span ${openAmelia} style="display:inline-block;background:${color};color:white;padding:1rem 2.75rem;border-radius:12px;font-weight:800;font-size:1.0625rem;cursor:pointer;box-shadow:0 8px 28px ${color}45;transition:transform 0.15s,box-shadow 0.15s;letter-spacing:-0.01em" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 14px 36px ${color}55'" onmouseout="this.style.transform='';this.style.boxShadow='0 8px 28px ${color}45'">${content.hero.cta} ahora</span>
-          </div>`
-        }} />
+        {(() => {
+          const c = content.contact
+          const phone   = c?.phone?.trim()
+          const wa      = c?.whatsapp?.trim()
+          const address = c?.address?.trim()
+          const ig      = c?.instagram?.trim()
+          const hasInfo = !!(phone || wa || address || ig)
+          const sectionBg = t.bold?'rgba(255,255,255,0.04)':t.dark?'#0d0d14':t.glass?'rgba(255,255,255,0.04)':t.vib?'rgba(0,0,0,0.15)':'#f9fafb'
+          const cardBg  = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.05)' : 'white'
+          const cardBrd = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.1)' : '#f0f0f0'
+          const waUrl   = wa ? `https://wa.me/${wa.replace(/\D/g,'')}` : null
+          const igUrl   = ig ? `https://instagram.com/${ig.replace('@','')}` : null
+
+          return (
+            <div style={{ padding: '5rem 2rem', background: sectionBg }}>
+              <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
+                <h2 style={{ fontSize: 'clamp(1.625rem,4vw,2.25rem)', fontWeight: 900, color: fg,
+                              margin: '0 0 0.75rem', letterSpacing: t.bold ? '-0.02em' : 'normal' }}>
+                  {c?.cta ?? '¿Listo para comenzar?'}
+                </h2>
+                <p style={{ color: muted, fontSize: '1.0625rem', margin: '0 auto 2.25rem',
+                             maxWidth: 480, lineHeight: 1.7 }}>
+                  Agenda en minutos, sin llamadas ni esperas.
+                </p>
+                <span dangerouslySetInnerHTML={{ __html:
+                  `<span ${openAmelia} style="display:inline-block;background:${color};color:white;padding:1rem 2.75rem;border-radius:12px;font-weight:800;font-size:1.0625rem;cursor:pointer;box-shadow:0 8px 28px ${color}45;transition:transform 0.15s,box-shadow 0.15s;letter-spacing:-0.01em" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 14px 36px ${color}55'" onmouseout="this.style.transform='';this.style.boxShadow='0 8px 28px ${color}45'">${content.hero.cta} ahora</span>`
+                }} />
+
+                {hasInfo && (
+                  <div style={{ marginTop: '3rem', display: 'grid',
+                                gridTemplateColumns: `repeat(auto-fit,minmax(180px,1fr))`,
+                                gap: '1rem', textAlign: 'left' }}>
+                    {phone && (
+                      <a href={`tel:${phone.replace(/\s/g,'')}`} style={{ textDecoration: 'none' }}>
+                        <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
+                                       padding: '1.125rem 1.25rem', display: 'flex', alignItems: 'center',
+                                       gap: '0.75rem', backdropFilter: t.glass?'blur(8px)':'none' }}>
+                          <span style={{ fontSize: '1.375rem' }}>📞</span>
+                          <div>
+                            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
+                                         textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Teléfono</p>
+                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: fg, margin: 0 }}>{phone}</p>
+                          </div>
+                        </div>
+                      </a>
+                    )}
+                    {wa && waUrl && (
+                      <a href={waUrl} target="_blank" rel="noopener" style={{ textDecoration: 'none' }}>
+                        <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
+                                       padding: '1.125rem 1.25rem', display: 'flex', alignItems: 'center',
+                                       gap: '0.75rem', backdropFilter: t.glass?'blur(8px)':'none' }}>
+                          <span style={{ fontSize: '1.375rem' }}>💬</span>
+                          <div>
+                            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
+                                         textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>WhatsApp</p>
+                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: fg, margin: 0 }}>{wa}</p>
+                          </div>
+                        </div>
+                      </a>
+                    )}
+                    {address && (
+                      <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
+                                     padding: '1.125rem 1.25rem', display: 'flex', alignItems: 'center',
+                                     gap: '0.75rem', backdropFilter: t.glass?'blur(8px)':'none' }}>
+                        <span style={{ fontSize: '1.375rem' }}>📍</span>
+                        <div>
+                          <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
+                                       textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Dirección</p>
+                          <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: fg, margin: 0 }}>{address}</p>
+                        </div>
+                      </div>
+                    )}
+                    {ig && igUrl && (
+                      <a href={igUrl} target="_blank" rel="noopener" style={{ textDecoration: 'none' }}>
+                        <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
+                                       padding: '1.125rem 1.25rem', display: 'flex', alignItems: 'center',
+                                       gap: '0.75rem', backdropFilter: t.glass?'blur(8px)':'none' }}>
+                          <span style={{ fontSize: '1.375rem' }}>📸</span>
+                          <div>
+                            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
+                                         textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Instagram</p>
+                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: fg, margin: 0 }}>{ig}</p>
+                          </div>
+                        </div>
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ── FOOTER ── */}
         <div style={{ background: t.dark ? '#050508' : '#111827', padding: '3rem 2rem', textAlign: 'center' }}>

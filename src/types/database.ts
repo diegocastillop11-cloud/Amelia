@@ -46,6 +46,10 @@ export interface SiteContent {
   gallery?: string[]
   contact: {
     cta: string
+    phone?: string
+    address?: string
+    whatsapp?: string
+    instagram?: string
   }
   footer: {
     tagline: string

@@ -479,7 +479,33 @@ export default function SiteEditorClient({
 
             {panel==='acciones'&&(
               <div style={{display:'flex',flexDirection:'column',gap:10}}>
-                <p style={S}>Reseñas</p>
+
+                {/* ── Datos de contacto ── */}
+                <p style={S}>Datos de contacto</p>
+                {([
+                  {key:'contact.phone',     label:'Teléfono',   placeholder:'+56 9 1234 5678', icon:'📞'},
+                  {key:'contact.whatsapp',  label:'WhatsApp',   placeholder:'+56912345678',     icon:'💬'},
+                  {key:'contact.address',   label:'Dirección',  placeholder:'Calle 123, Ciudad',icon:'📍'},
+                  {key:'contact.instagram', label:'Instagram',  placeholder:'@minegocio',       icon:'📸'},
+                ] as {key:string;label:string;placeholder:string;icon:string}[]).map(f=>{
+                  const keys = f.key.split('.') as ['contact', keyof typeof content.contact]
+                  const val  = (content[keys[0]] as Record<string,string|undefined>)?.[keys[1]] ?? ''
+                  return (
+                    <div key={f.key}>
+                      <p style={{...S,marginBottom:3}}>{f.icon} {f.label}</p>
+                      <input
+                        value={val}
+                        onChange={e => edit(f.key, e.target.value)}
+                        placeholder={f.placeholder}
+                        style={{width:'100%',background:'rgba(255,255,255,0.04)',border:'1.5px solid rgba(255,255,255,0.08)',borderRadius:8,color:'#e2e8f0',fontSize:11,padding:'7px 10px',outline:'none',fontFamily:'Inter,sans-serif',boxSizing:'border-box'}}
+                      />
+                    </div>
+                  )
+                })}
+
+                <div style={{borderTop:'1px solid rgba(255,255,255,0.06)',paddingTop:10,marginTop:2}}>
+                  <p style={S}>Reseñas</p>
+                </div>
                 {(content.reviews??[]).map((r,i)=>(
                   <div key={i} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:10,padding:10}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
