@@ -43,10 +43,21 @@ export async function POST(req: Request) {
     })
 
     if (bizError) {
+      await adminClient.auth.admin.deleteUser(newUser.user.id)
       return NextResponse.json({ error: bizError.message }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, user_id: newUser.user.id })
+    // Generar link de invitación para que el cliente establezca su contraseña
+    const { data: linkData, error: linkError } =
+      await adminClient.auth.admin.generateLink({
+        type: 'invite',
+        email,
+        options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/dashboard` },
+      })
+
+    const inviteLink = linkError ? null : linkData?.properties?.action_link ?? null
+
+    return NextResponse.json({ success: true, user_id: newUser.user.id, invite_link: inviteLink })
   } catch (error) {
     console.error('Error creando cliente:', error)
     return NextResponse.json({ error: 'Error interno' }, { status: 500 })

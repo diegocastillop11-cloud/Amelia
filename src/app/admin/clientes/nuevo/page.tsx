@@ -4,6 +4,58 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+function SuccessScreen({ inviteLink, onContinue }: { inviteLink: string | null; onContinue: () => void }) {
+  const [copied, setCopied] = useState(false)
+
+  const copy = async () => {
+    if (!inviteLink) return
+    await navigator.clipboard.writeText(inviteLink)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="p-8 max-w-lg">
+      <div className="card p-8 text-center">
+        <p className="text-3xl mb-3">✅</p>
+        <p className="font-semibold text-lg mb-1" style={{ color: 'var(--text-primary)' }}>
+          Cliente creado
+        </p>
+        <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
+          Comparte este link con el cliente para que establezca su contraseña.
+        </p>
+
+        {inviteLink ? (
+          <div className="mb-6">
+            <div className="p-3 rounded-xl mb-3 text-left break-all text-xs mono"
+                 style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+              {inviteLink}
+            </div>
+            <button
+              onClick={copy}
+              className="btn-primary w-full"
+              style={{ fontFamily: 'inherit' }}>
+              {copied ? '✓ Copiado' : '📋 Copiar link de acceso'}
+            </button>
+            <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
+              Envíalo por WhatsApp, email o como prefieras. Expira en 24 horas.
+            </p>
+          </div>
+        ) : (
+          <div className="mb-6 p-4 rounded-xl text-sm"
+               style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#fcd34d' }}>
+            No se pudo generar el link automáticamente. Ve a Supabase → Authentication → Users y envía un "Reset password" manualmente.
+          </div>
+        )}
+
+        <button onClick={onContinue} className="btn-ghost text-sm w-full" style={{ fontFamily: 'inherit' }}>
+          Ir a lista de clientes →
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const CATEGORIES = [
   'Barbería','Pastelería','Clínica','Restaurante','Cafetería',
   'Salón de belleza','Gimnasio','Veterinaria','Tienda de ropa',
@@ -21,6 +73,7 @@ export default function NuevoClientePage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
   const set = (k: string, v: string) =>
@@ -41,16 +94,12 @@ export default function NuevoClientePage() {
     const data = await res.json()
 
     if (!res.ok) { setError(data.error ?? 'Error desconocido'); setLoading(false); return }
+    setInviteLink(data.invite_link ?? null)
     setSuccess(true)
-    setTimeout(() => router.push('/admin/clientes'), 1500)
   }
 
   if (success) return (
-    <div className="p-8 max-w-lg text-center">
-      <p className="text-2xl mb-2">✅</p>
-      <p className="font-semibold text-white">Cliente creado exitosamente</p>
-      <p className="text-sm text-gray-400 mt-1">Se enviará un email para establecer contraseña.</p>
-    </div>
+    <SuccessScreen inviteLink={inviteLink} onContinue={() => router.push('/admin/clientes')} />
   )
 
   return (
