@@ -19,6 +19,42 @@ export default async function DashboardPage() {
   const hasValidSite = !!(site?.content && (site.content as Record<string, unknown>)?.hero)
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] ?? 'ahí'
 
+  // ── Métricas (solo si hay negocio) ──────────────────────────────────────
+  const now   = new Date()
+  const mesInicio = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+  const hoy       = now.toISOString().split('T')[0]
+
+  const [
+    { count: citasMes },
+    { count: citasPendientes },
+    { count: totalClientes },
+    { data: proximasCitas },
+    { data: license },
+  ] = await Promise.all([
+    business
+      ? supabase.from('bookings').select('*', { count: 'exact', head: true })
+          .eq('business_id', business.id).gte('date', mesInicio)
+      : Promise.resolve({ count: 0 }),
+    business
+      ? supabase.from('bookings').select('*', { count: 'exact', head: true })
+          .eq('business_id', business.id).eq('status', 'pending').gte('date', hoy)
+      : Promise.resolve({ count: 0 }),
+    business
+      ? supabase.from('clients').select('*', { count: 'exact', head: true })
+          .eq('business_id', business.id)
+      : Promise.resolve({ count: 0 }),
+    business
+      ? supabase.from('bookings').select('date, service, customer_name, status')
+          .eq('business_id', business.id).gte('date', hoy)
+          .neq('status', 'cancelled').order('date', { ascending: true }).limit(5)
+      : Promise.resolve({ data: [] }),
+    business
+      ? supabase.from('licenses').select('plan').eq('business_id', business.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
+
+  const plan = (license as { plan?: string } | null)?.plan ?? 'free'
+
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
@@ -30,7 +66,6 @@ export default async function DashboardPage() {
 
       {!business || !hasValidSite ? (
         <div className="space-y-4">
-          {/* CTA crear sitio */}
           <div className="relative rounded-2xl overflow-hidden p-8" style={{
             background: 'linear-gradient(135deg, #1e1b4b 0%, #2d2a5e 50%, #1e1b4b 100%)',
             border: '1px solid rgba(99,102,241,0.3)',
@@ -49,11 +84,10 @@ export default async function DashboardPage() {
       ) : (
         <div className="space-y-4">
 
-          {/* ── Sitio card con botón Editar prominente ── */}
+          {/* ── Sitio card ── */}
           <div className="card p-6">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-4">
-                {/* Indicador color */}
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                      style={{
                        background: `${business.primary_color ?? '#6366f1'}20`,
@@ -78,8 +112,6 @@ export default async function DashboardPage() {
                   </p>
                 </div>
               </div>
-
-              {/* Acciones */}
               <div className="flex items-center gap-2 flex-wrap">
                 {business.is_published && (
                   <a href={`/sitio/${business.slug}`} target="_blank"
@@ -91,7 +123,6 @@ export default async function DashboardPage() {
                       style={{ textDecoration: 'none' }}>
                   🔄 Regenerar
                 </Link>
-                {/* ✅ Botón Editar prominente */}
                 <Link
                   href={`/dashboard/sitio/editor?id=${business.id}`}
                   className="btn-primary text-sm py-2.5 px-5"
@@ -106,23 +137,115 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Quick stats */}
+          {/* ── Stats ── */}
           <div className="grid grid-cols-3 gap-3">
             <Link href="/dashboard/reservas" className="card card-hover p-5" style={{ textDecoration: 'none' }}>
-              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Próximas reservas</p>
-              <p className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>—</p>
-              <p className="text-xs mt-1" style={{ color: 'var(--accent-light)' }}>Configurar →</p>
+              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Citas este mes</p>
+              <p className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {citasMes ?? 0}
+              </p>
+              {(citasPendientes ?? 0) > 0 && (
+                <p className="text-xs mt-1" style={{ color: '#fcd34d' }}>
+                  {citasPendientes} por confirmar
+                </p>
+              )}
+              {(citasPendientes ?? 0) === 0 && (
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Ver agenda →</p>
+              )}
             </Link>
-            <Link href="/dashboard/productos" className="card card-hover p-5" style={{ textDecoration: 'none' }}>
-              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Productos</p>
-              <p className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>—</p>
+
+            <Link href="/dashboard/clientes" className="card card-hover p-5" style={{ textDecoration: 'none' }}>
+              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Clientes</p>
+              <p className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {totalClientes ?? 0}
+              </p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                {(totalClientes ?? 0) === 0 ? 'Aún sin clientes' : 'Ver todos →'}
+              </p>
             </Link>
+
             <Link href="/dashboard/upgrade" className="card card-hover p-5" style={{ textDecoration: 'none' }}>
               <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Plan actual</p>
-              <p className="text-2xl font-semibold" style={{ color: 'var(--accent-light)' }}>Free</p>
-              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Mejorar →</p>
+              <p className="text-2xl font-semibold capitalize"
+                 style={{ color: plan === 'free' ? 'var(--text-primary)' : 'var(--accent-light)' }}>
+                {plan}
+              </p>
+              {plan === 'free' && (
+                <p className="text-xs mt-1" style={{ color: 'var(--accent-light)' }}>Mejorar plan →</p>
+              )}
             </Link>
           </div>
+
+          {/* ── Próximas citas ── */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                Próximas citas
+              </p>
+              <Link href="/dashboard/reservas" className="text-xs"
+                    style={{ color: 'var(--accent-light)', textDecoration: 'none' }}>
+                Ver todas →
+              </Link>
+            </div>
+
+            {!proximasCitas || proximasCitas.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-sm mb-3" style={{ color: 'var(--text-muted)' }}>
+                  Aún no hay citas agendadas.
+                </p>
+                {business.is_published ? (
+                  <a href={`/sitio/${business.slug}`} target="_blank"
+                     className="btn-ghost text-xs" style={{ textDecoration: 'none' }}>
+                    Compartir mi sitio ↗
+                  </a>
+                ) : (
+                  <Link href={`/dashboard/sitio/editor?id=${business.id}`}
+                        className="btn-ghost text-xs" style={{ textDecoration: 'none' }}>
+                    Publicar sitio →
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(proximasCitas as { date: string; service: string; customer_name: string; status: string }[]).map((cita, i) => {
+                  const fecha = new Date(cita.date + 'T00:00:00')
+                  const label = fecha.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' })
+                  return (
+                    <div key={i} className="flex items-center justify-between py-2.5 px-3 rounded-xl"
+                         style={{ background: 'var(--bg-elevated)' }}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                             style={{ background: `${business.primary_color ?? '#6366f1'}18` }}>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                               style={{ color: business.primary_color ?? '#6366f1' }}>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {cita.customer_name}
+                          </p>
+                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                            {cita.service} · {label}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs px-2.5 py-1 rounded-full font-medium"
+                            style={{
+                              background: cita.status === 'confirmed'
+                                ? 'rgba(110,231,183,0.12)' : 'rgba(252,211,77,0.12)',
+                              color: cita.status === 'confirmed' ? '#6ee7b7' : '#fcd34d',
+                            }}>
+                        {cita.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
         </div>
       )}
     </div>

@@ -5,6 +5,14 @@ SaaS chileno para pequeños negocios: genera sitios web con IA, gestiona reserva
 
 ## Cómo trabajar en este proyecto
 
+### Reglas de comunicación
+- **Siempre responder en español**, sin excepción.
+- **Trabajar con planes de acción**: antes de implementar algo no trivial, presentar un plan numerado breve (3-5 pasos), esperar confirmación, luego ejecutar paso a paso.
+
+### Contexto de producto
+- Amelia es para **cualquier tipo de negocio** — barberías, pastelerías, consultas médicas, ventas de productos, etc. Las métricas, textos y flows deben ser genéricos (ej: "citas" no "cortes", "clientes" no "pacientes").
+- La URL principal siempre es **Amelia** — no personalizar el nombre del producto por negocio.
+
 ### Prioridades
 1. **Poco uso de tokens** — respuestas directas, sin explicar lo obvio. Una propuesta + el tradeoff principal, no una lista de 5 opciones.
 2. **Orden lógico** — una cosa a la vez. Terminar lo que se empieza antes de pasar a lo siguiente.
@@ -12,8 +20,8 @@ SaaS chileno para pequeños negocios: genera sitios web con IA, gestiona reserva
 
 ### Flujo de trabajo
 - Leer el archivo relevante antes de editar
-- Proponer en 2-3 líneas si la tarea es ambigua, esperar confirmación
-- Implementar directo si la tarea es clara
+- Proponer plan de acción si la tarea tiene más de 2 pasos, esperar confirmación
+- Implementar directo si la tarea es clara y pequeña
 - Verificar que lo editado compila (sin errores de TypeScript obvios)
 
 ## Arquitectura
