@@ -398,67 +398,92 @@ export default function SiteEditorClient({
                   </div>
                 </div>
                 <div>
-                  <p style={S}>Imágenes</p>
                   <input ref={logoRef} type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{const f=e.target.files?.[0];if(!f)return;const u=await upload(f,'logo');if(u){setLogo(u);sched(content,name,color,template)}}}/>
                   <input ref={coverRef} type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{const f=e.target.files?.[0];if(!f)return;const u=await upload(f,'cover');if(u){setCover(u);sched(content,name,color,template)}}}/>
                   <input ref={galleryRef} type="file" accept="image/*" multiple style={{display:'none'}} onChange={async e=>{const files=Array.from(e.target.files??[]);const urls=(await Promise.all(files.map(f=>upload(f,'gallery')))).filter(Boolean) as string[];const next=[...gallery,...urls].slice(0,12);setGallery(next);const nc={...content,gallery:next};setContent(nc);sched(nc,name,color,template)}}/>
-                  <div style={{display:'flex',flexDirection:'column',gap:5}}>
-                    {[{label:'Logo',icon:'🏷',state:logo,ref:logoRef},{label:'Portada',icon:'🖼',state:cover,ref:coverRef}].map(item=>(
-                      <button key={item.label} onClick={()=>item.ref.current?.click()} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,border:`1.5px dashed ${item.state?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'}`,background:'rgba(255,255,255,0.02)',cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
-                        {item.state?<img src={item.state} alt="" style={{width:22,height:22,objectFit:'contain',borderRadius:4}}/>:<span style={{fontSize:14}}>{item.icon}</span>}
-                        <span style={{fontSize:10,color:item.state?'#a5b4fc':'#4b4b6b',fontWeight:500}}>{item.state?`Cambiar ${item.label.toLowerCase()}`:`Subir ${item.label.toLowerCase()}`}</span>
+                  <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                    {/* Logo */}
+                    <div>
+                      <p style={S}>Logo</p>
+                      <button onClick={()=>logoRef.current?.click()} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,border:`1.5px dashed ${logo?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'}`,background:'rgba(255,255,255,0.02)',cursor:'pointer',fontFamily:'Inter,sans-serif',width:'100%'}}>
+                        {logo?<img src={logo} alt="" style={{width:22,height:22,objectFit:'contain',borderRadius:4}}/>:<span style={{fontSize:14}}>🏷</span>}
+                        <span style={{fontSize:10,color:logo?'#a5b4fc':'#4b4b6b',fontWeight:500}}>{logo?'Cambiar logo':'Subir logo'}</span>
                       </button>
-                    ))}
-                    <button onClick={()=>galleryRef.current?.click()} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,border:`1.5px dashed ${gallery.length>0?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'}`,background:'rgba(255,255,255,0.02)',cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
-                      <span style={{fontSize:14}}>📸</span><span style={{fontSize:10,color:gallery.length>0?'#a5b4fc':'#4b4b6b',fontWeight:500}}>{gallery.length>0?`${gallery.length} foto${gallery.length>1?'s':''} · Agregar`:'Galería de trabajos'}</span>
-                    </button>
+                      {logo&&(
+                        <div style={{marginTop:8}}>
+                          <div style={{display:'flex',gap:4,marginBottom:6}}>
+                            {LOGO_SIZES.map(s=>(
+                              <button key={s.id} onClick={()=>setThemeField('logoSize',s.id)} style={{flex:1,padding:'4px 2px',borderRadius:6,border:`1.5px solid ${(content.theme?.logoSize??'md')===s.id?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'}`,background:(content.theme?.logoSize??'md')===s.id?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.03)',cursor:'pointer',color:(content.theme?.logoSize??'md')===s.id?'#a5b4fc':'#4b4b6b',fontSize:10,fontWeight:700,fontFamily:'Inter,sans-serif'}}>{s.label}</button>
+                            ))}
+                          </div>
+                          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:4}}>
+                            {LOGO_SHAPES.map(s=>{
+                              const active=(content.theme?.logoShape??'default')===s.id
+                              const sz=20
+                              const preview: React.CSSProperties=s.id==='circle'?{borderRadius:'50%',width:sz,height:sz,background:'rgba(99,102,241,0.4)',margin:'0 auto 3px'}:s.id==='rounded'?{borderRadius:6,width:sz*2,height:sz,background:'rgba(99,102,241,0.4)',margin:'0 auto 3px'}:s.id==='square'?{borderRadius:0,width:sz,height:sz,background:'rgba(99,102,241,0.4)',margin:'0 auto 3px'}:{borderRadius:4,width:sz*2.5,height:sz*0.7,background:'rgba(99,102,241,0.4)',margin:'0 auto 3px'}
+                              return(
+                                <button key={s.id} onClick={()=>setThemeField('logoShape',s.id)} style={{padding:'6px 4px',borderRadius:6,border:`1.5px solid ${active?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'}`,background:active?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.03)',cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
+                                  <div style={preview}/>
+                                  <p style={{fontSize:9,color:active?'#a5b4fc':'#4b4b6b',textAlign:'center',margin:0}}>{s.label}</p>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* Portada */}
+                    <div>
+                      <p style={S}>Portada</p>
+                      <button onClick={()=>coverRef.current?.click()} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,border:`1.5px dashed ${cover?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'}`,background:'rgba(255,255,255,0.02)',cursor:'pointer',fontFamily:'Inter,sans-serif',width:'100%'}}>
+                        {cover?<img src={cover} alt="" style={{width:22,height:22,objectFit:'cover',borderRadius:4}}/>:<span style={{fontSize:14}}>🖼</span>}
+                        <span style={{fontSize:10,color:cover?'#a5b4fc':'#4b4b6b',fontWeight:500}}>{cover?'Cambiar portada':'Subir portada'}</span>
+                      </button>
+                    </div>
+                    {/* Galería */}
+                    <div>
+                      <p style={S}>Galería</p>
+                      <button onClick={()=>galleryRef.current?.click()} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,border:`1.5px dashed ${gallery.length>0?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'}`,background:'rgba(255,255,255,0.02)',cursor:'pointer',fontFamily:'Inter,sans-serif',width:'100%'}}>
+                        <span style={{fontSize:14}}>📸</span>
+                        <span style={{fontSize:10,color:gallery.length>0?'#a5b4fc':'#4b4b6b',fontWeight:500}}>{gallery.length>0?`${gallery.length} foto${gallery.length>1?'s':''} · Agregar más`:'Agregar fotos'}</span>
+                      </button>
+                      {gallery.length>0&&(
+                        <>
+                        <div style={{marginTop:8,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:4}}>
+                          {GALLERY_FRAMES.map(f=>{
+                            const active=(content.theme?.galleryFrame??'rounded')===f.id
+                            const previewStyle: React.CSSProperties=f.id==='circle'?{borderRadius:'50%',width:28,height:28,background:'rgba(99,102,241,0.35)',margin:'0 auto 3px'}:f.id==='square'?{borderRadius:0,width:28,height:28,background:'rgba(99,102,241,0.35)',margin:'0 auto 3px'}:f.id==='shadow'?{borderRadius:8,width:28,height:28,background:'rgba(99,102,241,0.35)',boxShadow:'0 6px 14px rgba(0,0,0,0.55)',margin:'0 auto 3px'}:f.id==='border'?{borderRadius:6,width:28,height:28,background:'rgba(99,102,241,0.2)',outline:`2px solid ${color}`,outlineOffset:1,margin:'0 auto 3px'}:f.id==='polaroid'?{borderRadius:2,width:24,height:28,background:'white',padding:'2px 2px 8px',boxShadow:'0 2px 8px rgba(0,0,0,0.4)',margin:'0 auto 3px'}:{borderRadius:8,width:28,height:28,background:'rgba(99,102,241,0.35)',margin:'0 auto 3px'}
+                            return(
+                              <button key={f.id} onClick={()=>setThemeField('galleryFrame',f.id)} style={{padding:'6px 2px',borderRadius:6,border:`1.5px solid ${active?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'}`,background:active?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.03)',cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
+                                <div style={previewStyle}/>
+                                <p style={{fontSize:9,color:active?'#a5b4fc':'#4b4b6b',textAlign:'center',margin:0}}>{f.label}</p>
+                              </button>
+                            )
+                          })}
+                        </div>
+                        {/* Thumbnails con botón eliminar */}
+                        <div style={{marginTop:10,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4}}>
+                          {gallery.map((url,i)=>(
+                            <div key={i} style={{position:'relative',aspectRatio:'1',borderRadius:6,overflow:'hidden',background:'rgba(255,255,255,0.04)'}}>
+                              <img src={url} alt="" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
+                              <button
+                                onClick={()=>{
+                                  const next=gallery.filter((_,idx)=>idx!==i)
+                                  setGallery(next)
+                                  const nc={...content,gallery:next}
+                                  setContent(nc)
+                                  sched(nc,name,color,template)
+                                }}
+                                style={{position:'absolute',top:3,right:3,width:18,height:18,borderRadius:'50%',border:'none',background:'rgba(0,0,0,0.7)',color:'white',fontSize:9,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,padding:0,fontFamily:'Inter,sans-serif'}}
+                              >✕</button>
+                            </div>
+                          ))}
+                        </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-
-                {/* ── Logo: tamaño + forma ── */}
-                {logo&&(
-                  <div>
-                    <p style={S}>Tamaño del logo</p>
-                    <div style={{display:'flex',gap:4,marginBottom:10}}>
-                      {LOGO_SIZES.map(s=>(
-                        <button key={s.id} onClick={()=>setThemeField('logoSize',s.id)} style={{flex:1,padding:'5px 2px',borderRadius:6,border:`1.5px solid ${(content.theme?.logoSize??'md')===s.id?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'}`,background:(content.theme?.logoSize??'md')===s.id?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.03)',cursor:'pointer',color:(content.theme?.logoSize??'md')===s.id?'#a5b4fc':'#4b4b6b',fontSize:10,fontWeight:700,fontFamily:'Inter,sans-serif'}}>{s.label}</button>
-                      ))}
-                    </div>
-                    <p style={S}>Forma del logo</p>
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:4}}>
-                      {LOGO_SHAPES.map(s=>{
-                        const active=(content.theme?.logoShape??'default')===s.id
-                        const sz=20
-                        const preview: React.CSSProperties=s.id==='circle'?{borderRadius:'50%',width:sz,height:sz,background:'rgba(99,102,241,0.4)',margin:'0 auto 3px'}:s.id==='rounded'?{borderRadius:6,width:sz*2,height:sz,background:'rgba(99,102,241,0.4)',margin:'0 auto 3px'}:s.id==='square'?{borderRadius:0,width:sz,height:sz,background:'rgba(99,102,241,0.4)',margin:'0 auto 3px'}:{borderRadius:4,width:sz*2.5,height:sz*0.7,background:'rgba(99,102,241,0.4)',margin:'0 auto 3px'}
-                        return(
-                          <button key={s.id} onClick={()=>setThemeField('logoShape',s.id)} style={{padding:'6px 4px',borderRadius:6,border:`1.5px solid ${active?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'}`,background:active?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.03)',cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
-                            <div style={preview}/>
-                            <p style={{fontSize:9,color:active?'#a5b4fc':'#4b4b6b',textAlign:'center',margin:0}}>{s.label}</p>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Marco de galería ── */}
-                {gallery.length>0&&(
-                  <div>
-                    <p style={S}>Marco de galería</p>
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:4}}>
-                      {GALLERY_FRAMES.map(f=>{
-                        const active=(content.theme?.galleryFrame??'rounded')===f.id
-                        const previewStyle: React.CSSProperties=f.id==='circle'?{borderRadius:'50%',width:28,height:28,background:'rgba(99,102,241,0.35)',margin:'0 auto 3px'}:f.id==='square'?{borderRadius:0,width:28,height:28,background:'rgba(99,102,241,0.35)',margin:'0 auto 3px'}:f.id==='shadow'?{borderRadius:8,width:28,height:28,background:'rgba(99,102,241,0.35)',boxShadow:'0 6px 14px rgba(0,0,0,0.55)',margin:'0 auto 3px'}:f.id==='border'?{borderRadius:6,width:28,height:28,background:'rgba(99,102,241,0.2)',outline:`2px solid ${color}`,outlineOffset:1,margin:'0 auto 3px'}:f.id==='polaroid'?{borderRadius:2,width:24,height:28,background:'white',padding:'2px 2px 8px',boxShadow:'0 2px 8px rgba(0,0,0,0.4)',margin:'0 auto 3px'}:{borderRadius:8,width:28,height:28,background:'rgba(99,102,241,0.35)',margin:'0 auto 3px'}
-                        return(
-                          <button key={f.id} onClick={()=>setThemeField('galleryFrame',f.id)} style={{padding:'6px 2px',borderRadius:6,border:`1.5px solid ${active?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'}`,background:active?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.03)',cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
-                            <div style={previewStyle}/>
-                            <p style={{fontSize:9,color:active?'#a5b4fc':'#4b4b6b',textAlign:'center',margin:0}}>{f.label}</p>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
 
               </div>
             )}

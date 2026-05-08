@@ -34,10 +34,16 @@ export interface Service {
   name: string; description: string; price: string; image?: string
 }
 
+export interface ProductItem {
+  id: string; name: string; description: string | null
+  price: number | null; promo_price?: number; promo_label?: string; image_url?: string | null
+}
+
 export interface SiteRendererProps {
   content: SiteContent; color: string; template: TemplateId
   name: string; logo?: string | null; cover?: string | null
-  gallery?: string[]; fontFamily?: string
+  gallery?: string[]; fontFamily?: string; slug?: string
+  products?: ProductItem[]
 }
 
 function getTheme(tpl: TemplateId, color: string, hasCover: boolean) {
@@ -73,6 +79,78 @@ function getTheme(tpl: TemplateId, color: string, hasCover: boolean) {
   }
 }
 
+const contactScript = (slug: string) => `
+window.__ameliaContact = function(e) {
+  e.preventDefault();
+  var form = document.getElementById('amelia-contact-form');
+  var btn  = document.getElementById('amelia-contact-btn');
+  var msg  = document.getElementById('amelia-contact-msg');
+  var name = form.querySelector('[name=senderName]').value.trim();
+  var email= form.querySelector('[name=senderEmail]').value.trim();
+  var text = form.querySelector('[name=message]').value.trim();
+  if (!name || !text) return;
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+  msg.textContent = '';
+  msg.style.color = '';
+  fetch('/api/contact', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: '${slug}', senderName: name, senderEmail: email||undefined, message: text })
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if (d.success) {
+      msg.textContent = '✓ Mensaje enviado. Te responderemos pronto.';
+      msg.style.color = '#6ee7b7';
+      form.reset();
+    } else {
+      msg.textContent = 'Error al enviar. Intenta de nuevo.';
+      msg.style.color = '#f87171';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Enviar mensaje';
+  }).catch(function(){
+    msg.textContent = 'Error al enviar. Intenta de nuevo.';
+    msg.style.color = '#f87171';
+    btn.disabled = false;
+    btn.textContent = 'Enviar mensaje';
+  });
+};`
+
+const cartScript = (slug: string) => `
+(function(){
+  var KEY = 'ac-${slug}';
+  if (!window.__ameliaCartData) {
+    try { window.__ameliaCartData = JSON.parse(localStorage.getItem(KEY)||'[]'); } catch(e){ window.__ameliaCartData=[]; }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(window.__ameliaCartData)); } catch(e){}
+    window.dispatchEvent(new CustomEvent('amelia-cart-update',{detail:window.__ameliaCartData.slice()}));
+  }
+  window.__ameliaQty = function(id, delta) {
+    var el = document.getElementById('aqty-'+id);
+    if (!el) return;
+    var v = Math.max(1, Math.min(99, (parseInt(el.value)||1) + delta));
+    el.value = v;
+  };
+  window.__ameliaAddToCart = function(el) {
+    var p = {}; try { p = JSON.parse(decodeURIComponent(el.dataset.p)); } catch(e){ return; }
+    var qtyEl = document.getElementById('aqty-'+p.id);
+    var qty = qtyEl ? Math.max(1, parseInt(qtyEl.value)||1) : 1;
+    var cart = window.__ameliaCartData;
+    var found = -1;
+    for(var i=0;i<cart.length;i++) { if(cart[i].id===p.id){ found=i; break; } }
+    if(found>=0) cart[found].qty += qty;
+    else cart.push({id:p.id,name:p.name,price:p.price,promo_price:p.promo_price||undefined,qty:qty,image:p.image||null});
+    save();
+    if(qtyEl) qtyEl.value='1';
+    var orig = el.textContent;
+    el.textContent='✓ '+(qty>1?qty+' agregados':'Agregado');
+    el.style.background='#059669';
+    setTimeout(function(){ el.textContent=orig; el.style.background=''; },1500);
+  };
+  save();
+})();`
+
 const ctaScript = `
 window.__ameliaOpen = function(service) {
   var btn = document.getElementById('amelia-trigger');
@@ -95,7 +173,7 @@ document.addEventListener('keydown', function(e) {
 
 export function SiteRenderer({
   content, color, template, name, logo, cover, gallery = [],
-  fontFamily = 'Inter, sans-serif',
+  fontFamily = 'Inter, sans-serif', slug = '', products = [],
 }: SiteRendererProps) {
   const hasCover = !!(cover && cover.trim().length > 5)
   const t = getTheme(template, color, hasCover)
@@ -131,6 +209,8 @@ export function SiteRenderer({
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: ctaScript }} />
+      {slug && <script dangerouslySetInnerHTML={{ __html: contactScript(slug) }} />}
+      {slug && products.length > 0 && <script dangerouslySetInnerHTML={{ __html: cartScript(slug) }} />}
       <div style={{ fontFamily, background: pageBgOverride, minHeight: '100vh', color: fg }}>
 
         {/* ── NAV ── */}
@@ -354,6 +434,90 @@ export function SiteRenderer({
           </div>
         )}
 
+        {/* ── PRODUCTOS ── */}
+        {products.length > 0 && (
+          <div style={{ padding: '4rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.02)' : t.vib ? 'rgba(0,0,0,0.08)' : '#f9fafb' }}>
+            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: t.fg, margin: '0 0 0.5rem',
+                            fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>Nuestros productos</h2>
+              <p style={{ color: t.muted, fontSize: 13, margin: 0 }}>Agrega al carrito y coordina tu pedido</p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))',
+                           gap: '1.25rem', maxWidth: '960px', margin: '0 auto' }}>
+              {products.map(p => {
+                const cardBg  = t.dark  ? 'rgba(255,255,255,0.04)' : t.glass ? 'rgba(255,255,255,0.07)' : t.bold ? 'rgba(255,255,255,0.06)' : t.vib ? 'rgba(255,255,255,0.15)' : 'white'
+                const cardBrd = (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.1)' : '#f0f0f0'
+                const fg2     = (t.dark || t.vib || t.glass || t.bold) ? 'white' : '#111827'
+                const effectivePrice = p.promo_price ?? p.price
+                const pd = encodeURIComponent(JSON.stringify({
+                  id: p.id, name: p.name,
+                  price: p.price ?? 0, promo_price: p.promo_price,
+                  image: p.image_url ?? null,
+                }))
+                return (
+                  <div key={p.id} style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 16,
+                                            overflow: 'hidden', backdropFilter: 'blur(4px)',
+                                            display: 'flex', flexDirection: 'column' }}>
+                    {p.image_url
+                      ? <div style={{ height: 160, background: `url('${p.image_url}') center/cover no-repeat`, position: 'relative' }}>
+                          {p.promo_label && (
+                            <span style={{ position: 'absolute', top: 10, left: 10, background: '#ef4444',
+                                            color: 'white', fontSize: 11, fontWeight: 800, padding: '3px 10px',
+                                            borderRadius: 20, letterSpacing: '0.03em' }}>
+                              {p.promo_label}
+                            </span>
+                          )}
+                        </div>
+                      : <div style={{ height: 6, background: color }} />
+                    }
+                    <div style={{ padding: '1rem 1.125rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {!p.image_url && p.promo_label && (
+                        <span style={{ alignSelf: 'flex-start', background: '#ef4444', color: 'white',
+                                        fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20 }}>
+                          {p.promo_label}
+                        </span>
+                      )}
+                      <p style={{ fontWeight: 700, color: fg2, margin: 0, fontSize: '0.9375rem' }}>{p.name}</p>
+                      {p.description && <p style={{ color: t.muted, fontSize: '0.8125rem', lineHeight: 1.6, margin: 0, flex: 1 }}>{p.description}</p>}
+
+                      {/* Precio */}
+                      {p.price != null && (
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+                          {p.promo_price != null && (
+                            <span style={{ fontSize: '0.8125rem', color: t.muted, textDecoration: 'line-through' }}>
+                              ${p.price.toLocaleString('es-CL')}
+                            </span>
+                          )}
+                          <span style={{ fontWeight: 800, fontSize: '1.125rem', color: p.promo_price != null ? '#6ee7b7' : color }}>
+                            ${(effectivePrice ?? 0).toLocaleString('es-CL')}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Selector cantidad + botón */}
+                      <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }} dangerouslySetInnerHTML={{ __html:
+                        `<div style="display:flex;align-items:center;gap:6px">
+                           <button onclick="window.__ameliaQty('${p.id}',-1)"
+                             style="width:30px;height:30px;border-radius:8px;border:1px solid ${cardBrd};background:${t.dark||t.glass||t.bold?'rgba(255,255,255,0.06)':'#f3f4f6'};color:${fg2};font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1">−</button>
+                           <input id="aqty-${p.id}" type="number" value="1" min="1" max="99"
+                             style="width:44px;height:30px;border-radius:8px;border:1px solid ${cardBrd};background:${t.dark||t.glass||t.bold?'rgba(255,255,255,0.06)':'#f9fafb'};color:${fg2};font-size:13px;font-weight:700;text-align:center;font-family:inherit;outline:none" />
+                           <button onclick="window.__ameliaQty('${p.id}',1)"
+                             style="width:30px;height:30px;border-radius:8px;border:1px solid ${cardBrd};background:${t.dark||t.glass||t.bold?'rgba(255,255,255,0.06)':'#f3f4f6'};color:${fg2};font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1">+</button>
+                         </div>
+                         <button onclick="window.__ameliaAddToCart(this)" data-p="${pd}"
+                           style="width:100%;padding:9px;border-radius:9px;border:none;background:${color};color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.15s;letter-spacing:-0.01em"
+                           onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                           Agregar al carrito
+                         </button>`
+                      }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── RESEÑAS ── */}
         {content.reviews && content.reviews.length > 0 && (
           <div style={{ padding: '4rem 2rem', background: t.sectBg }}>
@@ -474,6 +638,38 @@ export function SiteRenderer({
             </div>
           )
         })()}
+
+        {/* ── FORMULARIO DE CONTACTO ── */}
+        {slug && (
+          <div style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : 'white' }}>
+            <div style={{ maxWidth: 540, margin: '0 auto' }}>
+              <h2 style={{ fontSize: '1.625rem', fontWeight: 800, color: t.fg, margin: '0 0 0.5rem', textAlign: 'center',
+                            fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
+                Envíanos un mensaje
+              </h2>
+              <p style={{ color: t.muted, fontSize: '0.9375rem', textAlign: 'center', margin: '0 0 2.25rem', lineHeight: 1.6 }}>
+                Te responderemos a la brevedad.
+              </p>
+              <div dangerouslySetInnerHTML={{ __html: `
+                <form id="amelia-contact-form" onsubmit="window.__ameliaContact(event)" style="display:flex;flex-direction:column;gap:14px">
+                  <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:${t.muted};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Nombre *</label>
+                    <input name="senderName" required placeholder="Tu nombre" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid ${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'};background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.06)':'#f9fafb'};color:${t.fg};font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'}'" />
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:${t.muted};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Email (opcional)</label>
+                    <input name="senderEmail" type="email" placeholder="tu@email.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid ${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'};background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.06)':'#f9fafb'};color:${t.fg};font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'}'" />
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:${t.muted};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Mensaje *</label>
+                    <textarea name="message" required rows="4" placeholder="¿En qué podemos ayudarte?" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid ${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'};background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.06)':'#f9fafb'};color:${t.fg};font-size:14px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'}'"></textarea>
+                  </div>
+                  <button id="amelia-contact-btn" type="submit" style="width:100%;padding:13px;border-radius:10px;border:none;background:${color};color:white;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s;letter-spacing:-0.01em" onmouseover="this.style.opacity='0.87'" onmouseout="this.style.opacity='1'">Enviar mensaje</button>
+                  <p id="amelia-contact-msg" style="text-align:center;font-size:13px;font-weight:600;margin:0"></p>
+                </form>` }} />
+            </div>
+          </div>
+        )}
 
         {/* ── FOOTER ── */}
         <div style={{ background: t.dark ? '#050508' : '#111827', padding: '3rem 2rem', textAlign: 'center' }}>
