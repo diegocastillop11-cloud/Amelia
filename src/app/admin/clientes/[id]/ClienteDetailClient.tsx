@@ -21,8 +21,9 @@ interface Props {
 }
 
 export default function ClienteDetailClient({ business, license, upgradeRequest, totalBookings, totalClients }: Props) {
-  const [plan, setPlan]           = useState(license?.plan ?? 'free')
-  const [modules, setModules]     = useState<Record<string, boolean>>(
+  const [plan, setPlan]               = useState(license?.plan ?? 'free')
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null)
+  const [modules, setModules]         = useState<Record<string, boolean>>(
     license?.modules ?? PLAN_DEFAULTS[license?.plan ?? 'free']
   )
   const [published, setPublished] = useState(business.is_published)
@@ -30,21 +31,25 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
   const [togglingMod, setTogglingMod] = useState<string | null>(null)
   const [msg, setMsg]             = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
-  async function actualizarPlan(nuevoPlan: string) {
+  const displayPlan = pendingPlan ?? plan
+
+  async function guardarPlan() {
+    if (!pendingPlan) return
     setSaving(true); setMsg(null)
     const res = await fetch('/api/admin/set-plan', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         business_id: business.id,
-        plan: nuevoPlan,
-        upgrade_request_id: upgradeRequest?.requested_plan === nuevoPlan ? upgradeRequest.id : undefined,
+        plan: pendingPlan,
+        upgrade_request_id: upgradeRequest?.requested_plan === pendingPlan ? upgradeRequest.id : undefined,
       }),
     })
     if (res.ok) {
-      setPlan(nuevoPlan)
-      setModules(PLAN_DEFAULTS[nuevoPlan])
-      setMsg({ type: 'ok', text: `Plan actualizado a ${nuevoPlan.toUpperCase()}` })
+      setPlan(pendingPlan)
+      setModules(PLAN_DEFAULTS[pendingPlan])
+      setPendingPlan(null)
+      setMsg({ type: 'ok', text: `Plan actualizado a ${pendingPlan.toUpperCase()}` })
     } else {
       setMsg({ type: 'err', text: 'Error al actualizar el plan' })
     }
@@ -81,7 +86,7 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
     setSaving(false)
   }
 
-  const planColor = PLAN_COLORS[plan] ?? '#6b7280'
+  const planColor = PLAN_COLORS[displayPlan] ?? '#6b7280'
 
   return (
     <div className="p-8 max-w-3xl">
@@ -143,10 +148,17 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
         <div className="card p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Plan de acceso</h2>
-            <span className="text-xs font-bold px-3 py-1 rounded-full capitalize"
-                  style={{ background: `${planColor}18`, color: planColor, border: `1px solid ${planColor}30` }}>
-              {plan}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {pendingPlan && (
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {plan} → <strong style={{ color: PLAN_COLORS[pendingPlan] }}>{pendingPlan}</strong>
+                </span>
+              )}
+              <span className="text-xs font-bold px-3 py-1 rounded-full capitalize"
+                    style={{ background: `${planColor}18`, color: planColor, border: `1px solid ${planColor}30` }}>
+                {displayPlan}
+              </span>
+            </div>
           </div>
 
           {upgradeRequest && (
@@ -156,36 +168,71 @@ export default function ClienteDetailClient({ business, license, upgradeRequest,
                 🔔 Solicitó upgrade a <strong>{upgradeRequest.requested_plan.toUpperCase()}</strong>
               </p>
               <button
-                onClick={() => actualizarPlan(upgradeRequest.requested_plan)}
-                disabled={saving}
+                onClick={() => setPendingPlan(upgradeRequest.requested_plan)}
                 className="mt-2 text-xs font-bold px-3 py-1.5 rounded-lg"
                 style={{ background: '#f59e0b', color: 'white', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-                Aprobar upgrade →
+                Seleccionar {upgradeRequest.requested_plan.toUpperCase()} →
               </button>
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-2 mb-1">
-            {(['free', 'pro', 'premium'] as const).map(p => (
-              <button
-                key={p}
-                onClick={() => actualizarPlan(p)}
-                disabled={saving || plan === p}
-                className="py-2.5 rounded-xl text-sm font-bold capitalize transition-all"
-                style={{
-                  background: plan === p ? `${PLAN_COLORS[p]}20` : 'rgba(255,255,255,0.03)',
-                  border: `1.5px solid ${plan === p ? `${PLAN_COLORS[p]}60` : 'rgba(255,255,255,0.08)'}`,
-                  color: plan === p ? PLAN_COLORS[p] : 'var(--text-muted)',
-                  cursor: plan === p ? 'default' : 'pointer',
-                  fontFamily: 'inherit',
-                }}>
-                {p}
-              </button>
-            ))}
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {(['free', 'pro', 'premium'] as const).map(p => {
+              const isActive  = displayPlan === p
+              const isSaved   = plan === p
+              return (
+                <button
+                  key={p}
+                  onClick={() => setPendingPlan(p === plan ? null : p)}
+                  disabled={saving}
+                  className="py-2.5 rounded-xl text-sm font-bold capitalize transition-all"
+                  style={{
+                    background: isActive ? `${PLAN_COLORS[p]}20` : 'rgba(255,255,255,0.03)',
+                    border: `1.5px solid ${isActive ? `${PLAN_COLORS[p]}60` : 'rgba(255,255,255,0.08)'}`,
+                    color: isActive ? PLAN_COLORS[p] : 'var(--text-muted)',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                    outline: isActive && !isSaved ? `2px dashed ${PLAN_COLORS[p]}60` : 'none',
+                    outlineOffset: 2,
+                  }}>
+                  {p}
+                </button>
+              )
+            })}
           </div>
-          <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-            Al cambiar el plan se resetean los módulos a los valores por defecto.
-          </p>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {pendingPlan
+                ? 'Cambio pendiente — confirma para aplicar.'
+                : 'Al cambiar el plan se resetean los módulos a los valores por defecto.'}
+            </p>
+            {pendingPlan && (
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <button
+                  onClick={() => setPendingPlan(null)}
+                  disabled={saving}
+                  style={{
+                    padding: '0.375rem 0.75rem', borderRadius: 8, fontSize: '0.8125rem',
+                    fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                    color: 'var(--text-muted)',
+                  }}>
+                  Cancelar
+                </button>
+                <button
+                  onClick={guardarPlan}
+                  disabled={saving}
+                  style={{
+                    padding: '0.375rem 0.875rem', borderRadius: 8, fontSize: '0.8125rem',
+                    fontWeight: 700, cursor: saving ? 'wait' : 'pointer', fontFamily: 'inherit',
+                    background: PLAN_COLORS[pendingPlan], color: 'white', border: 'none',
+                    opacity: saving ? 0.7 : 1,
+                  }}>
+                  {saving ? 'Guardando...' : `Guardar → ${pendingPlan.toUpperCase()}`}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Módulos */}

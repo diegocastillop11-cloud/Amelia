@@ -37,7 +37,9 @@ export default function ClientesClient({
 
   const [tab, setTab] = useState(defaultTab)
   const [selected, setSelected] = useState<Client | null>(null)
-  const [notes, setNotes] = useState('')
+  const [notes, setNotes]           = useState('')
+  const [allergies, setAllergies]   = useState('')
+  const [preferences, setPreferences] = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
   const [notesSaved, setNotesSaved] = useState(false)
   const [bookings, setBookings] = useState<BookingRow[]>([])
@@ -58,25 +60,38 @@ export default function ClientesClient({
   })
 
   const openClient = async (c: Client) => {
-    setSelected(c); setNotes(c.notes ?? ''); setNotesSaved(false)
+    setSelected(c); setNotesSaved(false)
+    setNotes(''); setAllergies(''); setPreferences('')
     setLoadingBookings(true)
-    const r = await fetch(`/api/clients/${c.id}/bookings?business_id=${businessId}`)
-    const d = await r.json()
-    setBookings(d.bookings ?? [])
+    const [bookingsRes, profileRes] = await Promise.all([
+      fetch(`/api/clients/${c.id}/bookings?business_id=${businessId}`),
+      fetch(`/api/client-notes?business_id=${businessId}&email=${encodeURIComponent(c.email)}`),
+    ])
+    const { bookings: bks } = await bookingsRes.json()
+    const { profile } = await profileRes.json()
+    setBookings(bks ?? [])
+    setNotes(profile?.notes ?? '')
+    setAllergies(profile?.allergies ?? '')
+    setPreferences(profile?.preferences ?? '')
     setLoadingBookings(false)
   }
 
   const saveNotes = async () => {
     if (!selected) return
     setSavingNotes(true)
-    await fetch('/api/clients', {
-      method: 'PATCH',
+    await fetch('/api/client-notes', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_id: selected.id, notes }),
+      body: JSON.stringify({
+        business_id: businessId,
+        client_email: selected.email,
+        client_name: selected.name,
+        client_phone: selected.phone,
+        notes, allergies, preferences,
+      }),
     })
     setSavingNotes(false); setNotesSaved(true)
     setTimeout(() => setNotesSaved(false), 2000)
-    router.refresh()
   }
 
   return (
@@ -185,17 +200,29 @@ export default function ClientesClient({
               </div>
             </div>
 
-            {/* Notas */}
-            <div>
-              <p className="text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-                Notas privadas
+            {/* Perfil del cliente */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                Perfil del cliente
               </p>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)}
-                        rows={4} placeholder="Ej: prefiere corte con máquina 3, alérgico a X producto..."
-                        className="input-field resize-none text-xs" />
+              {[
+                { label: '📝 Notas del servicio', value: notes, set: setNotes,
+                  placeholder: 'Ej: prefiere tijera, sin máquina...' },
+                { label: '⚠️ Alergias / condiciones', value: allergies, set: setAllergies,
+                  placeholder: 'Ej: alérgico al amoniaco...' },
+                { label: '💡 Preferencias', value: preferences, set: setPreferences,
+                  placeholder: 'Ej: le gusta la música tranquila...' },
+              ].map(({ label, value, set, placeholder }) => (
+                <div key={label}>
+                  <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                  <textarea value={value} onChange={e => set(e.target.value)}
+                            rows={2} placeholder={placeholder}
+                            className="input-field resize-none text-xs w-full" />
+                </div>
+              ))}
               <button onClick={saveNotes} disabled={savingNotes}
-                      className="btn-primary w-full mt-2 text-xs py-2">
-                {savingNotes ? 'Guardando...' : notesSaved ? '✓ Guardado' : 'Guardar notas'}
+                      className="btn-primary w-full text-xs py-2">
+                {savingNotes ? 'Guardando...' : notesSaved ? '✓ Guardado' : '💾 Guardar notas'}
               </button>
             </div>
 
