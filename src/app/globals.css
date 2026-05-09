@@ -4,6 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Tema oscuro (default) ── */
 :root {
   --bg-base:     #13131f;
   --bg-surface:  #0f0f1a;
@@ -19,7 +20,40 @@
   --accent-glow:  rgba(99,102,241,0.15);
 }
 
+/* ── Tema claro ── */
+[data-theme="light"] {
+  --bg-base:     #f4f4f8;
+  --bg-surface:  #ffffff;
+  --bg-elevated: #eeeef5;
+  --bg-hover:    #e0e0f0;
+  --border:      rgba(0,0,0,0.08);
+  --border-accent: rgba(99,102,241,0.3);
+  --text-primary: #1a1a2e;
+  --text-secondary: #4b4b6b;
+  --text-muted:   #9090b0;
+  --accent:       #6366f1;
+  --accent-light: #4f46e5;
+  --accent-glow:  rgba(99,102,241,0.1);
+}
+
+/* ── Tema midnight (azul profundo) ── */
+[data-theme="midnight"] {
+  --bg-base:     #050510;
+  --bg-surface:  #080818;
+  --bg-elevated: #0d0d22;
+  --bg-hover:    #13133a;
+  --border:      rgba(255,255,255,0.04);
+  --border-accent: rgba(99,102,241,0.2);
+  --text-primary: #dde1ff;
+  --text-secondary: #7070a0;
+  --text-muted:   #2a2a50;
+  --accent:       #818cf8;
+  --accent-light: #c7d2fe;
+  --accent-glow:  rgba(129,140,248,0.12);
+}
+
 * { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Inter', sans-serif;

@@ -13,6 +13,7 @@ const NAV: { href: string; icon: string; label: string; exact?: boolean; root?: 
   { href: '/dashboard/productos',        icon: '📦', label: 'Productos',  moduleKey: 'productos' },
   { href: '/dashboard/pedidos',          icon: '🛒', label: 'Pedidos',    moduleKey: 'productos' },
   { href: '/dashboard/metricas',          icon: '📊', label: 'Métricas',      moduleKey: 'metricas' },
+  { href: '/dashboard/asistente',        icon: '🤖', label: 'Asistente IA'  },
   { href: '/dashboard/recordatorios',    icon: '🔔', label: 'Recordatorios', moduleKey: 'recordatorios' },
   { href: '/dashboard/settings',         icon: '⚙️', label: 'Ajustes'   },
 ]

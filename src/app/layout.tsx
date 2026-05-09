@@ -13,6 +13,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        {/* Aplica el tema guardado antes del primer render para evitar flash */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var t = localStorage.getItem('amelia-theme');
+            if (t && t !== 'dark') document.documentElement.setAttribute('data-theme', t);
+          })();
+        `}} />
+      </head>
       <body>{children}</body>
     </html>
   )

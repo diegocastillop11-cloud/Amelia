@@ -7,7 +7,7 @@ import SiteCart, { type DeliverySettings } from './SiteCart'
 
 interface DBProduct {
   id: string; name: string; description: string | null
-  price: number | null; image_url?: string | null
+  price: number | null; image_url?: string | null; stock?: number | null
 }
 interface DBPromotion {
   type: 'percent' | 'fixed'; value: number
@@ -39,7 +39,7 @@ export default async function SitioPublicoPage({ params }: { params: { slug: str
   if (!site?.content) notFound()
 
   const [{ data: dbProducts }, { data: dbPromos }, { data: schedules }] = await Promise.all([
-    supabase.from('products').select('id,name,description,price,image_url')
+    supabase.from('products').select('id,name,description,price,image_url,stock')
       .eq('business_id', business.id).order('created_at', { ascending: false }),
     supabase.from('promotions').select('type,value,applies_to,item_id')
       .eq('business_id', business.id).eq('active', true),
@@ -53,7 +53,7 @@ export default async function SitioPublicoPage({ params }: { params: { slug: str
 
   const products: ProductItem[] = (dbProducts ?? []).map((p: DBProduct) => ({
     id: p.id, name: p.name, description: p.description,
-    price: p.price, image_url: p.image_url,
+    price: p.price, image_url: p.image_url, stock: p.stock,
     ...applyPromo(p, promoList),
   }))
 

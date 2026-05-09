@@ -54,6 +54,11 @@ export interface SiteContent {
   footer: {
     tagline: string
   }
+  nav?: {
+    label: string
+    anchor: string
+    visible: boolean
+  }[]
   theme?: {
     headingColor?: string
     textColor?: string

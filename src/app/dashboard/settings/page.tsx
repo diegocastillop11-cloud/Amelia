@@ -3,9 +3,7 @@ import Link from 'next/link'
 
 export default async function SettingsPage() {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { data: owner } = await supabase
     .from('owners')
@@ -20,53 +18,65 @@ export default async function SettingsPage() {
     .single()
 
   return (
-    <div className="p-8 max-w-2xl">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">Ajustes</h1>
+    <div style={{ padding: '2rem', maxWidth: 640 }}>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2rem' }}>
+        Ajustes
+      </h1>
 
-      <div className="space-y-6">
-        <section className="bg-white border border-gray-100 rounded-xl p-6">
-          <h2 className="font-semibold text-gray-800 mb-4">Tu perfil</h2>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Nombre</span>
-              <span className="text-gray-800">{owner?.full_name ?? '—'}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* Perfil */}
+        <section style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 16, padding: '1.25rem 1.5rem' }}>
+          <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>Tu perfil</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Nombre</span>
+              <span style={{ color: 'var(--text-primary)' }}>{owner?.full_name ?? '—'}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Email</span>
-              <span className="text-gray-800">{user?.email}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Email</span>
+              <span style={{ color: 'var(--text-primary)' }}>{user?.email}</span>
             </div>
           </div>
         </section>
 
+        {/* Negocio */}
         {business && (
-          <section className="bg-white border border-gray-100 rounded-xl p-6">
-            <h2 className="font-semibold text-gray-800 mb-4">Tu negocio</h2>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Nombre</span>
-                <span className="text-gray-800">{business.name}</span>
+          <section style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 16, padding: '1.25rem 1.5rem' }}>
+            <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>Tu negocio</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Nombre</span>
+                <span style={{ color: 'var(--text-primary)' }}>{business.name}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Rubro</span>
-                <span className="text-gray-800">{business.category}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Rubro</span>
+                <span style={{ color: 'var(--text-primary)' }}>{business.category}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">URL pública</span>
-                <span className="text-sky-600">/sitio/{business.slug}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>URL pública</span>
+                <span style={{ color: 'var(--accent-light)' }}>/sitio/{business.slug}</span>
               </div>
             </div>
           </section>
         )}
 
-        <Link
-          href="/dashboard/settings/personalizacion"
-          className="block bg-white border border-gray-100 rounded-xl p-6 hover:border-sky-200 transition-colors"
+        {/* Personalización visual */}
+        <Link href="/dashboard/settings/personalizacion"
+          style={{
+            display: 'block', background: 'var(--bg-elevated)',
+            border: '1px solid var(--border)', borderRadius: 16,
+            padding: '1.25rem 1.5rem', textDecoration: 'none',
+          }}
         >
-          <h2 className="font-semibold text-gray-800">Personalización visual</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Colores, logo y apariencia de tu sitio →
+          <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+            Personalización visual →
+          </h2>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+            Colores, logo y apariencia de tu sitio público
           </p>
         </Link>
+
       </div>
     </div>
   )

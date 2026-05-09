@@ -489,16 +489,69 @@ export default function SiteEditorClient({
             )}
 
             {panel==='secciones'&&(
-              <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                <p style={S}>Secciones visibles</p>
-                {SECTIONS_LIST.map(s=>(
-                  <div key={s.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,background:'rgba(255,255,255,0.03)'}}>
-                    <span style={{fontSize:11,color:'#8b8bab'}}>{s.label}</span>
-                    <div onClick={()=>setSections(prev=>({...prev,[s.key]:!prev[s.key as keyof typeof prev]}))} style={{width:32,height:18,borderRadius:9,position:'relative',cursor:'pointer',background:sections[s.key as keyof typeof sections]?color:'rgba(255,255,255,0.1)',transition:'background 0.2s'}}>
-                      <div style={{width:14,height:14,background:'white',borderRadius:7,position:'absolute',top:2,transition:'left 0.2s',left:sections[s.key as keyof typeof sections]?15:2}}/>
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+
+                {/* Secciones visibles */}
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  <p style={S}>Secciones visibles</p>
+                  {SECTIONS_LIST.map(s=>(
+                    <div key={s.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,background:'rgba(255,255,255,0.03)'}}>
+                      <span style={{fontSize:11,color:'#8b8bab'}}>{s.label}</span>
+                      <div onClick={()=>setSections(prev=>({...prev,[s.key]:!prev[s.key as keyof typeof prev]}))} style={{width:32,height:18,borderRadius:9,position:'relative',cursor:'pointer',background:sections[s.key as keyof typeof sections]?color:'rgba(255,255,255,0.1)',transition:'background 0.2s'}}>
+                        <div style={{width:14,height:14,background:'white',borderRadius:7,position:'absolute',top:2,transition:'left 0.2s',left:sections[s.key as keyof typeof sections]?15:2}}/>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                {/* Menú de navegación */}
+                <div style={{borderTop:'1px solid rgba(255,255,255,0.06)',paddingTop:10}}>
+                  <p style={S}>Menú de navegación</p>
+                  <p style={{fontSize:9,color:'#3d3d5c',marginBottom:8}}>Edita el nombre de cada link o desactívalo</p>
+                  {(() => {
+                    const defaultNav = [
+                      {label:'Inicio',    anchor:'inicio',    visible:true},
+                      {label:'Servicios', anchor:'servicios', visible:true},
+                      {label:'Productos', anchor:'productos', visible:true},
+                      {label:'Galería',   anchor:'galeria',   visible:true},
+                      {label:'Contacto',  anchor:'contacto',  visible:true},
+                    ]
+                    const nav = content.nav ?? defaultNav
+                    const updateNav = (idx: number, field: 'label'|'visible', val: string|boolean) => {
+                      const next = nav.map((l,i) => i===idx ? {...l,[field]:val} : l)
+                      const nc = {...content, nav: next}
+                      setContent(nc); sched(nc,name,color,template)
+                    }
+                    const moveNav = (idx: number, dir: -1|1) => {
+                      const next = [...nav]
+                      const swap = idx+dir
+                      if (swap<0||swap>=next.length) return
+                      ;[next[idx],next[swap]]=[next[swap],next[idx]]
+                      const nc = {...content, nav: next}
+                      setContent(nc); sched(nc,name,color,template)
+                    }
+                    return nav.map((l,i) => (
+                      <div key={l.anchor} style={{display:'flex',alignItems:'center',gap:4,marginBottom:5}}>
+                        {/* Flechas orden */}
+                        <div style={{display:'flex',flexDirection:'column',gap:1}}>
+                          <button onClick={()=>moveNav(i,-1)} style={{background:'none',border:'none',cursor:'pointer',color:'#3d3d5c',fontSize:8,padding:'1px 3px',lineHeight:1}}>▲</button>
+                          <button onClick={()=>moveNav(i, 1)} style={{background:'none',border:'none',cursor:'pointer',color:'#3d3d5c',fontSize:8,padding:'1px 3px',lineHeight:1}}>▼</button>
+                        </div>
+                        {/* Label editable */}
+                        <input
+                          value={l.label}
+                          onChange={e=>updateNav(i,'label',e.target.value)}
+                          style={{flex:1,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:6,color:'#e2e8f0',fontSize:11,padding:'5px 7px',outline:'none',fontFamily:'Inter,sans-serif'}}
+                        />
+                        {/* Toggle visible */}
+                        <div onClick={()=>updateNav(i,'visible',!l.visible)} style={{width:28,height:16,borderRadius:8,position:'relative',cursor:'pointer',flexShrink:0,background:l.visible?color:'rgba(255,255,255,0.1)',transition:'background 0.2s'}}>
+                          <div style={{width:12,height:12,background:'white',borderRadius:6,position:'absolute',top:2,transition:'left 0.2s',left:l.visible?14:2}}/>
+                        </div>
+                      </div>
+                    ))
+                  })()}
+                </div>
+
               </div>
             )}
 

@@ -41,5 +41,5 @@ export async function GET(req: Request) {
   const distanceKm = Math.round(straightKm * 1.4 * 10) / 10   // factor de ruta × 1.4
   const cost       = Math.round(distanceKm * pricePerKm)
 
-  return NextResponse.json({ distanceKm, cost, pricePerKm })
+  return NextResponse.json({ distanceKm, cost, pricePerKm, destLat: to.lat, destLng: to.lng })
 }

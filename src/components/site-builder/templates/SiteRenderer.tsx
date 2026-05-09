@@ -37,6 +37,7 @@ export interface Service {
 export interface ProductItem {
   id: string; name: string; description: string | null
   price: number | null; promo_price?: number; promo_label?: string; image_url?: string | null
+  stock?: number | null
 }
 
 export interface SiteRendererProps {
@@ -63,6 +64,7 @@ function getTheme(tpl: TemplateId, color: string, hasCover: boolean) {
            : eleg  ? '#faf9f7'
            : '#fff',
     fg:     (over || bold) ? 'white' : '#111827',
+    sectFg: (dark || vib || glass || bold) ? 'white' : '#111827',
     muted:  dark   ? 'rgba(255,255,255,0.5)'
            : (vib || glass || bold) ? 'rgba(255,255,255,0.72)'
            : '#6b7280',
@@ -144,9 +146,10 @@ const cartScript = (slug: string) => `
     save();
     if(qtyEl) qtyEl.value='1';
     var orig = el.textContent;
+    var origBg = el.style.background;
     el.textContent='✓ '+(qty>1?qty+' agregados':'Agregado');
     el.style.background='#059669';
-    setTimeout(function(){ el.textContent=orig; el.style.background=''; },1500);
+    setTimeout(function(){ el.textContent=orig; el.style.background=origBg; },1500);
   };
   save();
 })();`
@@ -182,7 +185,8 @@ export function SiteRenderer({
   const themeH  = content.theme?.headingColor
   const themeT  = content.theme?.textColor
   const themeBg = content.theme?.bgColor
-  const fg      = themeH ?? t.fg
+  const fg      = themeH ?? t.fg       // hero (puede ser blanco sobre cover)
+  const sectFg  = themeH ?? t.sectFg   // secciones con fondo claro (ignora hasCover)
   const muted   = themeT ?? t.muted
   const pageBgOverride = themeBg ?? t.pageBg
 
@@ -238,18 +242,39 @@ export function SiteRenderer({
             : <span style={{
                 fontWeight: t.mini ? 400 : 800,
                 fontSize: t.mini ? '0.75rem' : t.bold ? '1.25rem' : '1.0625rem',
-                color: t.fg,
+                color: sectFg,
                 textTransform: t.mini ? 'uppercase' : 'none',
                 letterSpacing: t.mini ? '0.15em' : t.bold ? '-0.02em' : 'normal',
               }}>{name}</span>
           }
-          <span dangerouslySetInnerHTML={{ __html:
-            `<span ${openAmelia} style="background:${t.mini ? 'transparent' : ctaBg};color:${t.mini ? t.muted : ctaFg};padding:${t.mini ? '0' : '0.5rem 1.25rem'};border-radius:8px;font-size:0.875rem;font-weight:700;cursor:pointer;display:inline-block;transition:opacity 0.15s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">${content.contact?.cta ?? 'Reservar'}</span>`
-          }} />
+          {/* Nav links + CTA */}
+          {(() => {
+            const defaultLinks = [
+              { label: 'Inicio',    anchor: 'inicio',    visible: true },
+              { label: 'Servicios', anchor: 'servicios', visible: true },
+              { label: 'Productos', anchor: 'productos', visible: products.length > 0 },
+              { label: 'Galería',   anchor: 'galeria',   visible: gallery.length > 0 },
+              { label: 'Contacto',  anchor: 'contacto',  visible: true },
+            ]
+            const navLinks = content.nav
+              ? content.nav.filter(l => l.visible)
+              : defaultLinks.filter(l => l.visible)
+            const linkHtml = navLinks.map(l =>
+              `<a href="#${l.anchor}" style="padding:0.4rem 0.75rem;border-radius:8px;font-size:0.8rem;font-weight:500;color:${t.muted};text-decoration:none;transition:all 0.15s" onmouseover="this.style.color='${sectFg}';this.style.background='rgba(128,128,128,0.12)'" onmouseout="this.style.color='${t.muted}';this.style.background='transparent'">${l.label}</a>`
+            ).join('')
+            return (
+              <span dangerouslySetInnerHTML={{ __html: `
+                <span style="display:flex;align-items:center;gap:4px">
+                  ${linkHtml}
+                  <span ${openAmelia} style="background:${t.mini ? 'transparent' : ctaBg};color:${t.mini ? t.muted : ctaFg};padding:${t.mini ? '0' : '0.5rem 1.25rem'};border-radius:8px;font-size:0.875rem;font-weight:700;cursor:pointer;display:inline-block;transition:opacity 0.15s;margin-left:0.25rem" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">${content.contact?.cta ?? 'Reservar'}</span>
+                </span>
+              `}} />
+            )
+          })()}
         </nav>
 
         {/* ── HERO ── */}
-        <div style={{ background: heroBg, padding: t.mini ? '5rem 3rem' : t.bold ? '6rem 2rem' : '5rem 2rem',
+        <div id="inicio" style={{ background: heroBg, padding: t.mini ? '5rem 3rem' : t.bold ? '6rem 2rem' : '5rem 2rem',
                       position: 'relative', overflow: 'hidden' }}>
           {/* Dot grid para moderna */}
           {!hasCover && !t.dark && !t.vib && !t.mini && !t.bold && !t.glass && (
@@ -354,7 +379,7 @@ export function SiteRenderer({
         </div>
 
         {/* ── SERVICIOS ── */}
-        <div style={{ padding: t.mini ? '3rem 3rem' : '4rem 2rem', background: t.sectBg }}>
+        <div id="servicios" style={{ padding: t.mini ? '3rem 3rem' : '4rem 2rem', background: t.sectBg }}>
           {t.mini ? (
             <div style={{ maxWidth: '700px' }}>
               <p style={{ fontSize: '0.75rem', fontWeight: 800, color: t.muted,
@@ -373,7 +398,7 @@ export function SiteRenderer({
           ) : (
             <>
               {!t.bold && <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-                <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: fg, margin: '0 0 0.5rem',
+                <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: sectFg, margin: '0 0 0.5rem',
                               fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>Servicios</h2>
                 <p style={{ color: t.muted, fontSize: 13, margin: 0 }}>Haz clic en un servicio para reservar</p>
               </div>}
@@ -406,145 +431,6 @@ export function SiteRenderer({
           )}
         </div>
 
-        {/* ── GALERÍA ── */}
-        {gallery.length > 0 && (
-          <div style={{ padding: '4rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.02)' : 'white' }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '2.5rem', color: fg }}>
-              Nuestros trabajos
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))',
-                           gap: galFrame === 'polaroid' ? '1.5rem' : '0.75rem', maxWidth: '960px', margin: '0 auto' }}>
-              {gallery.map((url, i) => {
-                const frameS = galleryFrameStyle(galFrame, color)
-                const imgS   = galleryImgStyle(galFrame)
-                const fStr   = Object.entries(frameS).map(([k,v])=>`${k.replace(/([A-Z])/g,'-$1').toLowerCase()}:${v}`).join(';')
-                const iStr   = Object.entries(imgS).map(([k,v])=>`${k.replace(/([A-Z])/g,'-$1').toLowerCase()}:${v}`).join(';')
-                return (
-                  <div key={i} dangerouslySetInnerHTML={{ __html:
-                    `<div onclick="window.__ameliaLightbox('${url.replace(/'/g,"\\'")}')"
-                          style="${fStr};cursor:zoom-in;transition:transform 0.2s,box-shadow 0.2s"
-                          onmouseover="this.style.transform='scale(1.03)';this.style.zIndex='1'"
-                          onmouseout="this.style.transform='';this.style.zIndex=''">
-                       <img src="${url}" alt="" style="${iStr}" loading="lazy" />
-                     </div>`
-                  }} />
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── PRODUCTOS ── */}
-        {products.length > 0 && (
-          <div style={{ padding: '4rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.02)' : t.vib ? 'rgba(0,0,0,0.08)' : '#f9fafb' }}>
-            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: t.fg, margin: '0 0 0.5rem',
-                            fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>Nuestros productos</h2>
-              <p style={{ color: t.muted, fontSize: 13, margin: 0 }}>Agrega al carrito y coordina tu pedido</p>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))',
-                           gap: '1.25rem', maxWidth: '960px', margin: '0 auto' }}>
-              {products.map(p => {
-                const cardBg  = t.dark  ? 'rgba(255,255,255,0.04)' : t.glass ? 'rgba(255,255,255,0.07)' : t.bold ? 'rgba(255,255,255,0.06)' : t.vib ? 'rgba(255,255,255,0.15)' : 'white'
-                const cardBrd = (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.1)' : '#f0f0f0'
-                const fg2     = (t.dark || t.vib || t.glass || t.bold) ? 'white' : '#111827'
-                const effectivePrice = p.promo_price ?? p.price
-                const pd = encodeURIComponent(JSON.stringify({
-                  id: p.id, name: p.name,
-                  price: p.price ?? 0, promo_price: p.promo_price,
-                  image: p.image_url ?? null,
-                }))
-                return (
-                  <div key={p.id} style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 16,
-                                            overflow: 'hidden', backdropFilter: 'blur(4px)',
-                                            display: 'flex', flexDirection: 'column' }}>
-                    {p.image_url
-                      ? <div style={{ height: 160, background: `url('${p.image_url}') center/cover no-repeat`, position: 'relative' }}>
-                          {p.promo_label && (
-                            <span style={{ position: 'absolute', top: 10, left: 10, background: '#ef4444',
-                                            color: 'white', fontSize: 11, fontWeight: 800, padding: '3px 10px',
-                                            borderRadius: 20, letterSpacing: '0.03em' }}>
-                              {p.promo_label}
-                            </span>
-                          )}
-                        </div>
-                      : <div style={{ height: 6, background: color }} />
-                    }
-                    <div style={{ padding: '1rem 1.125rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {!p.image_url && p.promo_label && (
-                        <span style={{ alignSelf: 'flex-start', background: '#ef4444', color: 'white',
-                                        fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20 }}>
-                          {p.promo_label}
-                        </span>
-                      )}
-                      <p style={{ fontWeight: 700, color: fg2, margin: 0, fontSize: '0.9375rem' }}>{p.name}</p>
-                      {p.description && <p style={{ color: t.muted, fontSize: '0.8125rem', lineHeight: 1.6, margin: 0, flex: 1 }}>{p.description}</p>}
-
-                      {/* Precio */}
-                      {p.price != null && (
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
-                          {p.promo_price != null && (
-                            <span style={{ fontSize: '0.8125rem', color: t.muted, textDecoration: 'line-through' }}>
-                              ${p.price.toLocaleString('es-CL')}
-                            </span>
-                          )}
-                          <span style={{ fontWeight: 800, fontSize: '1.125rem', color: p.promo_price != null ? '#6ee7b7' : color }}>
-                            ${(effectivePrice ?? 0).toLocaleString('es-CL')}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Selector cantidad + botón */}
-                      <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }} dangerouslySetInnerHTML={{ __html:
-                        `<div style="display:flex;align-items:center;gap:6px">
-                           <button onclick="window.__ameliaQty('${p.id}',-1)"
-                             style="width:30px;height:30px;border-radius:8px;border:1px solid ${cardBrd};background:${t.dark||t.glass||t.bold?'rgba(255,255,255,0.06)':'#f3f4f6'};color:${fg2};font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1">−</button>
-                           <input id="aqty-${p.id}" type="number" value="1" min="1" max="99"
-                             style="width:44px;height:30px;border-radius:8px;border:1px solid ${cardBrd};background:${t.dark||t.glass||t.bold?'rgba(255,255,255,0.06)':'#f9fafb'};color:${fg2};font-size:13px;font-weight:700;text-align:center;font-family:inherit;outline:none" />
-                           <button onclick="window.__ameliaQty('${p.id}',1)"
-                             style="width:30px;height:30px;border-radius:8px;border:1px solid ${cardBrd};background:${t.dark||t.glass||t.bold?'rgba(255,255,255,0.06)':'#f3f4f6'};color:${fg2};font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1">+</button>
-                         </div>
-                         <button onclick="window.__ameliaAddToCart(this)" data-p="${pd}"
-                           style="width:100%;padding:9px;border-radius:9px;border:none;background:${color};color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.15s;letter-spacing:-0.01em"
-                           onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                           Agregar al carrito
-                         </button>`
-                      }} />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── RESEÑAS ── */}
-        {content.reviews && content.reviews.length > 0 && (
-          <div style={{ padding: '4rem 2rem', background: t.sectBg }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '2.5rem', color: fg }}>
-              Lo que dicen nuestros clientes
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))',
-                           gap: '1.25rem', maxWidth: '960px', margin: '0 auto' }}>
-              {content.reviews.map((r, i) => (
-                <div key={i} style={{
-                  background: (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : 'white',
-                  border: `1px solid ${t.border}`, borderRadius: 16, padding: '1.625rem',
-                  backdropFilter: (t.glass || t.bold) ? 'blur(8px)' : 'none',
-                }}>
-                  <p style={{ color: '#f59e0b', fontSize: '1.125rem', margin: '0 0 0.875rem', letterSpacing: 2 }}>
-                    {'★'.repeat(r.rating ?? 5)}
-                  </p>
-                  <p style={{ color: t.muted, fontSize: '0.9375rem', lineHeight: 1.75, fontStyle: 'italic', margin: '0 0 1rem' }}>
-                    "{r.text}"
-                  </p>
-                  <p style={{ fontWeight: 700, color: t.fg, fontSize: '0.875rem', margin: 0 }}>{r.author}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* ── CONTACTO CTA ── */}
         {(() => {
           const c = content.contact
@@ -562,7 +448,7 @@ export function SiteRenderer({
           return (
             <div style={{ padding: '5rem 2rem', background: sectionBg }}>
               <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
-                <h2 style={{ fontSize: 'clamp(1.625rem,4vw,2.25rem)', fontWeight: 900, color: fg,
+                <h2 style={{ fontSize: 'clamp(1.625rem,4vw,2.25rem)', fontWeight: 900, color: sectFg,
                               margin: '0 0 0.75rem', letterSpacing: t.bold ? '-0.02em' : 'normal' }}>
                   {c?.cta ?? '¿Listo para comenzar?'}
                 </h2>
@@ -587,7 +473,7 @@ export function SiteRenderer({
                           <div>
                             <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
                                          textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Teléfono</p>
-                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: fg, margin: 0 }}>{phone}</p>
+                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{phone}</p>
                           </div>
                         </div>
                       </a>
@@ -601,7 +487,7 @@ export function SiteRenderer({
                           <div>
                             <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
                                          textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>WhatsApp</p>
-                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: fg, margin: 0 }}>{wa}</p>
+                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{wa}</p>
                           </div>
                         </div>
                       </a>
@@ -614,7 +500,7 @@ export function SiteRenderer({
                         <div>
                           <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
                                        textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Dirección</p>
-                          <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: fg, margin: 0 }}>{address}</p>
+                          <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{address}</p>
                         </div>
                       </div>
                     )}
@@ -627,7 +513,7 @@ export function SiteRenderer({
                           <div>
                             <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
                                          textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Instagram</p>
-                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: fg, margin: 0 }}>{ig}</p>
+                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{ig}</p>
                           </div>
                         </div>
                       </a>
@@ -639,11 +525,184 @@ export function SiteRenderer({
           )
         })()}
 
+        {/* ── PRODUCTOS ── */}
+        {products.length > 0 && (
+          <div id="productos" style={{ padding: '4rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.02)' : t.vib ? 'rgba(0,0,0,0.08)' : '#f9fafb' }}>
+            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: sectFg, margin: '0 0 0.5rem',
+                            fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>Nuestros productos</h2>
+              <p style={{ color: t.muted, fontSize: 13, margin: 0 }}>Agrega al carrito y coordina tu pedido</p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))',
+                           gap: '1.25rem', maxWidth: '960px', margin: '0 auto' }}>
+              {products.map(p => {
+                const cardBg  = t.dark  ? 'rgba(255,255,255,0.04)' : t.glass ? 'rgba(255,255,255,0.07)' : t.bold ? 'rgba(255,255,255,0.06)' : t.vib ? 'rgba(255,255,255,0.15)' : 'white'
+                const cardBrd = (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.1)' : '#f0f0f0'
+                const fg2     = (t.dark || t.vib || t.glass || t.bold) ? 'white' : '#111827'
+                const effectivePrice = p.promo_price ?? p.price
+                const outOfStock = p.stock != null && p.stock === 0
+                const lowStock   = p.stock != null && p.stock > 0 && p.stock <= 3
+                const pd = encodeURIComponent(JSON.stringify({
+                  id: p.id, name: p.name,
+                  price: p.price ?? 0, promo_price: p.promo_price,
+                  image: p.image_url ?? null,
+                }))
+                return (
+                  <div key={p.id} style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 16,
+                                            overflow: 'hidden', backdropFilter: 'blur(4px)',
+                                            display: 'flex', flexDirection: 'column',
+                                            opacity: outOfStock ? 0.7 : 1 }}>
+                    {p.image_url
+                      ? <div style={{ height: 160, background: `url('${p.image_url}') center/cover no-repeat`, position: 'relative' }}>
+                          {p.promo_label && (
+                            <span style={{ position: 'absolute', top: 10, left: 10, background: '#ef4444',
+                                            color: 'white', fontSize: 11, fontWeight: 800, padding: '3px 10px',
+                                            borderRadius: 20, letterSpacing: '0.03em' }}>
+                              {p.promo_label}
+                            </span>
+                          )}
+                          {outOfStock && (
+                            <span style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.7)',
+                                            color: '#f87171', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 20 }}>
+                              Sin stock
+                            </span>
+                          )}
+                          {lowStock && (
+                            <span style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.7)',
+                                            color: '#f59e0b', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 20 }}>
+                              ¡Últimas {p.stock}!
+                            </span>
+                          )}
+                        </div>
+                      : <div style={{ height: 6, background: outOfStock ? '#6b7280' : color }} />
+                    }
+                    <div style={{ padding: '1rem 1.125rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {!p.image_url && p.promo_label && (
+                        <span style={{ alignSelf: 'flex-start', background: '#ef4444', color: 'white',
+                                        fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20 }}>
+                          {p.promo_label}
+                        </span>
+                      )}
+                      {!p.image_url && outOfStock && (
+                        <span style={{ alignSelf: 'flex-start', background: 'rgba(239,68,68,0.15)', color: '#f87171',
+                                        fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20 }}>
+                          Sin stock
+                        </span>
+                      )}
+                      {!p.image_url && lowStock && (
+                        <span style={{ alignSelf: 'flex-start', background: 'rgba(245,158,11,0.15)', color: '#f59e0b',
+                                        fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20 }}>
+                          ¡Últimas {p.stock}!
+                        </span>
+                      )}
+                      <p style={{ fontWeight: 700, color: fg2, margin: 0, fontSize: '0.9375rem' }}>{p.name}</p>
+                      {p.description && <p style={{ color: t.muted, fontSize: '0.8125rem', lineHeight: 1.6, margin: 0, flex: 1 }}>{p.description}</p>}
+
+                      {/* Precio */}
+                      {p.price != null && (
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+                          {p.promo_price != null && (
+                            <span style={{ fontSize: '0.8125rem', color: t.muted, textDecoration: 'line-through' }}>
+                              ${p.price.toLocaleString('es-CL')}
+                            </span>
+                          )}
+                          <span style={{ fontWeight: 800, fontSize: '1.125rem', color: p.promo_price != null ? '#6ee7b7' : color }}>
+                            ${(effectivePrice ?? 0).toLocaleString('es-CL')}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Selector cantidad + botón */}
+                      {outOfStock
+                        ? <button disabled style={{ marginTop:8, width:'100%', padding:'9px', borderRadius:'9px', border:'none',
+                                                     background:'rgba(255,255,255,0.08)', color:'#9ca3af', fontSize:13,
+                                                     fontWeight:700, cursor:'not-allowed', fontFamily:'inherit' }}>
+                            Sin stock
+                          </button>
+                        : <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }} dangerouslySetInnerHTML={{ __html:
+                            `<div style="display:flex;align-items:center;gap:6px">
+                               <button onclick="window.__ameliaQty('${p.id}',-1)"
+                                 style="width:30px;height:30px;border-radius:8px;border:1px solid ${cardBrd};background:${t.dark||t.glass||t.bold?'rgba(255,255,255,0.06)':'#f3f4f6'};color:${fg2};font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1">−</button>
+                               <input id="aqty-${p.id}" type="number" value="1" min="1" max="${p.stock ?? 99}"
+                                 style="width:44px;height:30px;border-radius:8px;border:1px solid ${cardBrd};background:${t.dark||t.glass||t.bold?'rgba(255,255,255,0.06)':'#f9fafb'};color:${fg2};font-size:13px;font-weight:700;text-align:center;font-family:inherit;outline:none" />
+                               <button onclick="window.__ameliaQty('${p.id}',1)"
+                                 style="width:30px;height:30px;border-radius:8px;border:1px solid ${cardBrd};background:${t.dark||t.glass||t.bold?'rgba(255,255,255,0.06)':'#f3f4f6'};color:${fg2};font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1">+</button>
+                             </div>
+                             <button onclick="window.__ameliaAddToCart(this)" data-p="${pd}"
+                               style="width:100%;padding:9px;border-radius:9px;border:none;background:${color};color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.15s;letter-spacing:-0.01em"
+                               onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                               Agregar al carrito
+                             </button>`
+                          }} />
+                      }
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── GALERÍA ── */}
+        {gallery.length > 0 && (
+          <div id="galeria" style={{ padding: '4rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.02)' : 'white' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '2.5rem', color: sectFg }}>
+              Nuestros trabajos
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))',
+                           gap: galFrame === 'polaroid' ? '1.5rem' : '0.75rem', maxWidth: '960px', margin: '0 auto' }}>
+              {gallery.map((url, i) => {
+                const frameS = galleryFrameStyle(galFrame, color)
+                const imgS   = galleryImgStyle(galFrame)
+                const fStr   = Object.entries(frameS).map(([k,v])=>`${k.replace(/([A-Z])/g,'-$1').toLowerCase()}:${v}`).join(';')
+                const iStr   = Object.entries(imgS).map(([k,v])=>`${k.replace(/([A-Z])/g,'-$1').toLowerCase()}:${v}`).join(';')
+                return (
+                  <div key={i} dangerouslySetInnerHTML={{ __html:
+                    `<div onclick="window.__ameliaLightbox('${url.replace(/'/g,"\\'")}')"
+                          style="${fStr};cursor:zoom-in;transition:transform 0.2s,box-shadow 0.2s"
+                          onmouseover="this.style.transform='scale(1.03)';this.style.zIndex='1'"
+                          onmouseout="this.style.transform='';this.style.zIndex=''">
+                       <img src="${url}" alt="" style="${iStr}" loading="lazy" />
+                     </div>`
+                  }} />
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── RESEÑAS ── */}
+        {content.reviews && content.reviews.length > 0 && (
+          <div style={{ padding: '4rem 2rem', background: t.sectBg }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '2.5rem', color: sectFg }}>
+              Lo que dicen nuestros clientes
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))',
+                           gap: '1.25rem', maxWidth: '960px', margin: '0 auto' }}>
+              {content.reviews.map((r, i) => (
+                <div key={i} style={{
+                  background: (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : 'white',
+                  border: `1px solid ${t.border}`, borderRadius: 16, padding: '1.625rem',
+                  backdropFilter: (t.glass || t.bold) ? 'blur(8px)' : 'none',
+                }}>
+                  <p style={{ color: '#f59e0b', fontSize: '1.125rem', margin: '0 0 0.875rem', letterSpacing: 2 }}>
+                    {'★'.repeat(r.rating ?? 5)}
+                  </p>
+                  <p style={{ color: t.muted, fontSize: '0.9375rem', lineHeight: 1.75, fontStyle: 'italic', margin: '0 0 1rem' }}>
+                    "{r.text}"
+                  </p>
+                  <p style={{ fontWeight: 700, color: sectFg, fontSize: '0.875rem', margin: 0 }}>{r.author}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── FORMULARIO DE CONTACTO ── */}
         {slug && (
-          <div style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : 'white' }}>
+          <div id="contacto" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : 'white' }}>
             <div style={{ maxWidth: 540, margin: '0 auto' }}>
-              <h2 style={{ fontSize: '1.625rem', fontWeight: 800, color: t.fg, margin: '0 0 0.5rem', textAlign: 'center',
+              <h2 style={{ fontSize: '1.625rem', fontWeight: 800, color: sectFg, margin: '0 0 0.5rem', textAlign: 'center',
                             fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
                 Envíanos un mensaje
               </h2>

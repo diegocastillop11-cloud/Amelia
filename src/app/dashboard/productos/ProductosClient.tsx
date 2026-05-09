@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import MapEmbed from '@/components/MapEmbed'
 import { useRouter } from 'next/navigation'
 
 interface Product {
   id: string; name: string; description: string | null
   price: number | null; image_url: string | null; created_at: string
+  cost_price?: number | null; stock?: number | null; unit?: string | null
 }
 interface Promotion {
   id: string; name: string; type: 'percent' | 'fixed'; value: number
@@ -34,12 +36,40 @@ export default function ProductosClient({ products: init, promotions: initPromos
   const [delivery,   setDelivery]   = useState<DeliverySettings>(initDelivery ?? { enabled:false, price_per_km:1000, origin_address:'' })
   const [configSaving, setConfigSaving] = useState(false)
   const [configSaved,  setConfigSaved]  = useState(false)
+  // Dirección origen: calle + comuna separadas
+  const splitOrigin = (addr: string) => {
+    const parts = addr.split(',').map(s => s.trim())
+    if (parts.length >= 3) return { street: parts.slice(0, -2).join(', '), commune: parts[parts.length - 2], region: parts[parts.length - 1] }
+    if (parts.length === 2) return { street: parts[0], commune: parts[1], region: '' }
+    return { street: addr, commune: '', region: '' }
+  }
+  const { street: initStreet, commune: initCommune, region: initRegion } = splitOrigin(initDelivery?.origin_address ?? '')
+  const [originStreet,  setOriginStreet]  = useState(initStreet)
+  const [originCommune, setOriginCommune] = useState(initCommune)
+  const [originRegion,  setOriginRegion]  = useState(initRegion)
+  const [originCoords,  setOriginCoords]  = useState<{ lat: number; lng: number } | null>(null)
+  const [originMapLoading, setOriginMapLoading] = useState(false)
+  const [originMapErr,  setOriginMapErr]  = useState('')
+  const originFull = [originStreet.trim(), originCommune.trim(), originRegion.trim()].filter(Boolean).join(', ')
+
+  const previewOrigin = async () => {
+    if (!originFull) return
+    setOriginMapLoading(true); setOriginMapErr(''); setOriginCoords(null)
+    const r = await fetch(`/api/geocode/preview?address=${encodeURIComponent(originFull)}`)
+    const d = await r.json()
+    setOriginMapLoading(false)
+    if (!r.ok) setOriginMapErr(d.error ?? 'Dirección no encontrada')
+    else setOriginCoords({ lat: d.lat, lng: d.lng })
+  }
 
   // ── Nuevo producto ──────────────────────────────────────────────────────────
   const [showForm, setShowForm]     = useState(false)
   const [pName,    setPName]        = useState('')
   const [pDesc,    setPDesc]        = useState('')
   const [pPrice,   setPPrice]       = useState('')
+  const [pCost,    setPCost]        = useState('')
+  const [pStock,   setPStock]       = useState('')
+  const [pUnit,    setPUnit]        = useState('unidad')
   const [pImg,     setPImg]         = useState<string | null>(null)
   const [imgUploading, setImgUploading] = useState(false)
   const [saving,   setSaving]       = useState(false)
@@ -63,12 +93,15 @@ export default function ProductosClient({ products: init, promotions: initPromos
       business_id: businessId, name: pName.trim(),
       description: pDesc.trim() || null,
       price: pPrice ? parseFloat(pPrice) : null,
+      cost_price: pCost ? parseFloat(pCost) : null,
+      stock: pStock !== '' ? parseInt(pStock) : null,
+      unit: pUnit || 'unidad',
       image_url: pImg,
     }).select().single()
     setSaving(false)
     if (!error && data) {
       setProducts(p => [data as Product, ...p])
-      setPName(''); setPDesc(''); setPPrice(''); setPImg(null); setShowForm(false)
+      setPName(''); setPDesc(''); setPPrice(''); setPCost(''); setPStock(''); setPUnit('unidad'); setPImg(null); setShowForm(false)
     }
   }
 
@@ -78,6 +111,24 @@ export default function ProductosClient({ products: init, promotions: initPromos
     const supabase = createClient()
     await supabase.from('products').delete().eq('id', id)
     setProducts(p => p.filter(x => x.id !== id))
+  }
+
+  const updateStock = async (id: string, delta: number) => {
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    const prod = products.find(p => p.id === id)
+    if (!prod) return
+    const newStock = Math.max(0, (prod.stock ?? 0) + delta)
+    await supabase.from('products').update({ stock: newStock }).eq('id', id)
+    setProducts(p => p.map(x => x.id === id ? { ...x, stock: newStock } : x))
+  }
+
+  const setStockDirect = async (id: string, value: number) => {
+    const v = Math.max(0, isNaN(value) ? 0 : value)
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    await supabase.from('products').update({ stock: v }).eq('id', id)
+    setProducts(p => p.map(x => x.id === id ? { ...x, stock: v } : x))
   }
 
   // ── Nueva promoción ─────────────────────────────────────────────────────────
@@ -191,9 +242,40 @@ export default function ProductosClient({ products: init, promotions: initPromos
                              placeholder="Descripción breve..." className="input-field" style={{ resize:'none' }} />
                 </div>
                 <div>
-                  <label style={S}>Precio (CLP)</label>
+                  <label style={S}>Precio venta (CLP)</label>
                   <input type="number" value={pPrice} onChange={e=>setPPrice(e.target.value)}
                          placeholder="0" min="0" className="input-field" />
+                </div>
+                <div>
+                  <label style={S}>Precio costo (CLP)</label>
+                  <input type="number" value={pCost} onChange={e=>setPCost(e.target.value)}
+                         placeholder="0" min="0" className="input-field" />
+                  {pPrice && pCost && parseFloat(pPrice) > 0 && (
+                    <p style={{ margin:'4px 0 0', fontSize:11, color:'#6ee7b7' }}>
+                      Margen: {Math.round((1 - parseFloat(pCost)/parseFloat(pPrice))*100)}%
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label style={S}>Stock inicial</label>
+                  <input type="number" value={pStock} onChange={e=>setPStock(e.target.value)}
+                         placeholder="Sin límite" min="0" className="input-field" />
+                </div>
+                <div>
+                  <label style={S}>Unidad de medida</label>
+                  <select value={pUnit} onChange={e=>setPUnit(e.target.value)} className="input-field">
+                    <option value="unidad">Unidad</option>
+                    <option value="kg">Kilogramo (kg)</option>
+                    <option value="g">Gramo (g)</option>
+                    <option value="litro">Litro (L)</option>
+                    <option value="ml">Mililitro (ml)</option>
+                    <option value="docena">Docena</option>
+                    <option value="caja">Caja</option>
+                    <option value="paquete">Paquete</option>
+                    <option value="metro">Metro</option>
+                    <option value="hora">Hora</option>
+                    <option value="porcion">Porción</option>
+                  </select>
                 </div>
                 <div>
                   <label style={S}>Imagen</label>
@@ -233,35 +315,84 @@ export default function ProductosClient({ products: init, promotions: initPromos
           <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
             {products.map(p => {
               const activePromo = promos.find(pr => pr.active && (pr.applies_to === 'all_products' || (pr.applies_to === 'product' && pr.item_id === p.id)))
+              const margin = (p.price && p.cost_price && p.price > 0)
+                ? Math.round((1 - p.cost_price / p.price) * 100) : null
+              const stockColor = p.stock == null ? 'var(--text-muted)'
+                : p.stock === 0 ? '#f87171' : p.stock <= 3 ? '#f59e0b' : '#6ee7b7'
+              const unitLabel = p.unit && p.unit !== 'unidad' ? ` ${p.unit}` : ''
               return (
-                <div key={p.id} className="card" style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px' }}>
-                  {p.image_url
-                    ? <img src={p.image_url} style={{ width:52, height:52, borderRadius:8, objectFit:'cover', flexShrink:0 }} />
-                    : <div style={{ width:52, height:52, borderRadius:8, background:'rgba(99,102,241,0.1)',
-                                     display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.25rem', flexShrink:0 }}>📦</div>
-                  }
-                  <div style={{ flex:1 }}>
-                    <p style={{ margin:0, fontWeight:600, color:'var(--text-primary)', fontSize:14 }}>{p.name}</p>
-                    {p.description && <p style={{ margin:'2px 0 0', fontSize:12, color:'var(--text-muted)' }}>{p.description}</p>}
-                  </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    {activePromo && (
-                      <span style={{ fontSize:11, fontWeight:700, background:'rgba(239,68,68,0.15)',
-                                      color:'#f87171', padding:'2px 8px', borderRadius:20 }}>
-                        {activePromo.type==='percent' ? `−${activePromo.value}%` : `−$${activePromo.value.toLocaleString('es-CL')}`}
-                      </span>
-                    )}
-                    {p.price != null && (
-                      <span style={{ fontWeight:700, color:'var(--accent-light)', fontSize:14 }}>
-                        ${p.price.toLocaleString('es-CL')}
-                      </span>
-                    )}
-                    <button onClick={()=>deleteProduct(p.id)}
-                            style={{ padding:'4px 10px', borderRadius:6, border:'1px solid rgba(239,68,68,0.3)',
-                                      background:'rgba(239,68,68,0.08)', color:'#f87171',
-                                      cursor:'pointer', fontSize:11, fontFamily:'inherit' }}>
-                      Eliminar
-                    </button>
+                <div key={p.id} className="card" style={{ overflow:'hidden' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px' }}>
+                    {p.image_url
+                      ? <img src={p.image_url} style={{ width:52, height:52, borderRadius:8, objectFit:'cover', flexShrink:0 }} />
+                      : <div style={{ width:52, height:52, borderRadius:8, background:'rgba(99,102,241,0.1)',
+                                       display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.25rem', flexShrink:0 }}>📦</div>
+                    }
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <p style={{ margin:0, fontWeight:600, color:'var(--text-primary)', fontSize:14 }}>{p.name}</p>
+                      {p.description && <p style={{ margin:'2px 0 0', fontSize:12, color:'var(--text-muted)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.description}</p>}
+                      <div style={{ display:'flex', gap:10, marginTop:4, flexWrap:'wrap', alignItems:'center' }}>
+                        {p.price != null && (
+                          <span style={{ fontWeight:700, color:'var(--accent-light)', fontSize:13 }}>
+                            ${p.price.toLocaleString('es-CL')}
+                          </span>
+                        )}
+                        {p.cost_price != null && (
+                          <span style={{ fontSize:11, color:'var(--text-muted)' }}>
+                            costo ${p.cost_price.toLocaleString('es-CL')}{unitLabel ? ` / ${p.unit}` : ''}
+                          </span>
+                        )}
+                        {margin !== null && (
+                          <span style={{ fontSize:11, fontWeight:700, color:'#6ee7b7' }}>
+                            {margin}% margen
+                          </span>
+                        )}
+                        {activePromo && (
+                          <span style={{ fontSize:11, fontWeight:700, background:'rgba(239,68,68,0.15)',
+                                          color:'#f87171', padding:'1px 7px', borderRadius:20 }}>
+                            {activePromo.type==='percent' ? `−${activePromo.value}%` : `−$${activePromo.value.toLocaleString('es-CL')}`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8, flexShrink:0 }}>
+                      {/* Stock control */}
+                      <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                        <span style={{ fontSize:11, color:'var(--text-muted)', marginRight:2 }}>
+                          Stock{unitLabel}:
+                        </span>
+                        <button onClick={()=>updateStock(p.id, -1)} disabled={p.stock === 0}
+                                style={{ width:22, height:22, borderRadius:5, border:'1px solid var(--border)',
+                                          background:'var(--bg-elevated)', color:'var(--text-muted)',
+                                          cursor: p.stock === 0 ? 'not-allowed' : 'pointer',
+                                          fontSize:13, lineHeight:1, fontFamily:'inherit' }}>−</button>
+                        <input
+                          type="number" min="0"
+                          value={p.stock ?? ''}
+                          placeholder="∞"
+                          onChange={e => setProducts(prev => prev.map(x => x.id === p.id ? { ...x, stock: e.target.value === '' ? null : parseInt(e.target.value) } : x))}
+                          onBlur={e => {
+                            if (e.target.value === '') return
+                            setStockDirect(p.id, parseInt(e.target.value))
+                          }}
+                          onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+                          style={{ width:48, height:22, borderRadius:5, border:`1px solid var(--border)`,
+                                    background:'var(--bg-elevated)', color:stockColor,
+                                    fontSize:13, fontWeight:700, textAlign:'center',
+                                    fontFamily:'inherit', outline:'none', padding:0 }}
+                        />
+                        <button onClick={()=>updateStock(p.id, 1)}
+                                style={{ width:22, height:22, borderRadius:5, border:'1px solid var(--border)',
+                                          background:'var(--bg-elevated)', color:'var(--text-muted)',
+                                          cursor:'pointer', fontSize:13, lineHeight:1, fontFamily:'inherit' }}>+</button>
+                      </div>
+                      <button onClick={()=>deleteProduct(p.id)}
+                              style={{ padding:'4px 10px', borderRadius:6, border:'1px solid rgba(239,68,68,0.3)',
+                                        background:'rgba(239,68,68,0.08)', color:'#f87171',
+                                        cursor:'pointer', fontSize:11, fontFamily:'inherit' }}>
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
@@ -442,14 +573,60 @@ export default function ProductosClient({ products: init, promotions: initPromos
 
             {delivery.enabled && (
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                <div style={{ gridColumn:'1/-1' }}>
-                  <label style={S}>Dirección de origen (tu local)</label>
-                  <input value={delivery.origin_address??''} onChange={e=>setDelivery(d=>({...d,origin_address:e.target.value}))}
-                         placeholder="Ej: Av. Providencia 1234, Santiago" className="input-field" />
-                  <p style={{ margin:'4px 0 0', fontSize:11, color:'var(--text-muted)' }}>
-                    Desde aquí se calcula la distancia hasta el cliente
-                  </p>
+                {/* Calle */}
+                <div>
+                  <label style={S}>Calle y número de tu local</label>
+                  <input value={originStreet}
+                         onChange={e=>{ setOriginStreet(e.target.value); setOriginCoords(null); setDelivery(d=>({...d,origin_address:[e.target.value.trim(),originCommune.trim(),originRegion.trim()].filter(Boolean).join(', ')})) }}
+                         placeholder="Ej: Grumete Briceño 0380" className="input-field" />
                 </div>
+                {/* Comuna + botón mapa */}
+                <div>
+                  <label style={S}>Comuna</label>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <input value={originCommune}
+                           onChange={e=>{ setOriginCommune(e.target.value); setOriginCoords(null); setDelivery(d=>({...d,origin_address:[originStreet.trim(),e.target.value.trim(),originRegion.trim()].filter(Boolean).join(', ')})) }}
+                           placeholder="Ej: La Florida" className="input-field" style={{ flex:1 }} />
+                    <button type="button" onClick={previewOrigin}
+                            disabled={originMapLoading || !originStreet.trim() || !originCommune.trim() || !originRegion.trim()}
+                            className="btn-secondary"
+                            style={{ whiteSpace:'nowrap', flexShrink:0, padding:'0 14px' }}>
+                      {originMapLoading ? '...' : '🗺 Ver'}
+                    </button>
+                  </div>
+                </div>
+                {/* Región */}
+                <div style={{ gridColumn:'1/-1' }}>
+                  <label style={S}>Región</label>
+                  <select value={originRegion}
+                          onChange={e=>{ setOriginRegion(e.target.value); setOriginCoords(null); setDelivery(d=>({...d,origin_address:[originStreet.trim(),originCommune.trim(),e.target.value.trim()].filter(Boolean).join(', ')})) }}
+                          className="input-field" style={{ cursor:'pointer' }}>
+                    <option value="">Selecciona región</option>
+                    {['Arica y Parinacota','Tarapacá','Antofagasta','Atacama','Coquimbo',
+                      'Valparaíso','Metropolitana de Santiago','O\'Higgins','Maule',
+                      'Ñuble','Biobío','La Araucanía','Los Ríos','Los Lagos',
+                      'Aysén','Magallanes'].map(r => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* Error mapa */}
+                {originMapErr && (
+                  <div style={{ gridColumn:'1/-1', fontSize:12, color:'#f87171' }}>{originMapErr}</div>
+                )}
+                {/* Mapa OSM */}
+                {originCoords && (
+                  <div style={{ gridColumn:'1/-1', borderRadius:10, overflow:'hidden',
+                                 border:'1px solid var(--border)' }}>
+                    <p style={{ margin:0, padding:'6px 12px', fontSize:11, fontWeight:700,
+                                 color:'var(--text-muted)', background:'var(--bg-elevated)',
+                                 textTransform:'uppercase', letterSpacing:'0.06em' }}>
+                      📍 Confirma que el punto es correcto
+                    </p>
+                    <MapEmbed lat={originCoords.lat} lng={originCoords.lng} height={220} />
+                  </div>
+                )}
+                {/* Precio por km */}
                 <div>
                   <label style={S}>Precio por km ($)</label>
                   <input type="number" min="0" value={delivery.price_per_km??1000}
