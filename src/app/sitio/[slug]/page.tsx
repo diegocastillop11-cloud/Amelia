@@ -62,6 +62,34 @@ export default async function SitioPublicoPage({ params }: { params: { slug: str
     name: s.name, price: s.price ?? '', description: s.description ?? '',
   }))
 
+  // ── Modo Premium: HTML completo generado por IA ────────────
+  if (content.htmlSite) {
+    return (
+      <>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
+          <iframe
+            srcDoc={content.htmlSite}
+            style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+            title={business.name}
+            sandbox="allow-scripts allow-forms allow-popups allow-same-origin allow-top-navigation"
+          />
+        </div>
+        <SiteWithChat
+          businessId={business.id} businessName={business.name}
+          color={color} services={services} hasBookings={hasBookings}
+          isPremium={true}
+        />
+        {products.length > 0 && (
+          <SiteCart
+            slug={params.slug} color={color} businessId={business.id}
+            deliverySettings={(business.delivery_settings as DeliverySettings | null) ?? undefined}
+          />
+        )}
+      </>
+    )
+  }
+
+  // ── Modo Estándar: SiteRenderer ────────────────────────────
   return (
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />

@@ -9,27 +9,43 @@ interface Props {
   color:        string
   services:     { name: string; price: string; description: string }[]
   hasBookings:  boolean
+  isPremium?:   boolean
 }
 
-export default function SiteWithChat({ businessId, businessName, color, services, hasBookings }: Props) {
+export default function SiteWithChat({ businessId, businessName, color, services, hasBookings, isPremium }: Props) {
   const [initialService, setInitialService] = useState<string | undefined>()
   const [chatOpen, setChatOpen] = useState(false)
   const [key, setKey] = useState(0)
 
+  const shouldShow = hasBookings || isPremium
+
   useEffect(() => {
-    if (!hasBookings) return
-    // Exponer función global para que el HTML del SiteRenderer pueda disparar el chat
+    if (!shouldShow) return
+
+    // Exponer función global para SiteRenderer estándar
     ;(window as unknown as Record<string, unknown>).__ameliaOpen = (service?: string) => {
       setInitialService(service ?? undefined)
       setChatOpen(true)
-      setKey(k => k + 1) // re-mount para resetear si cambia el servicio
+      setKey(k => k + 1)
     }
+
+    // Escuchar postMessage desde el iframe premium
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'amelia-open') {
+        setInitialService(e.data.service ?? undefined)
+        setChatOpen(true)
+        setKey(k => k + 1)
+      }
+    }
+    window.addEventListener('message', handleMessage)
+
     return () => {
       delete (window as unknown as Record<string, unknown>).__ameliaOpen
+      window.removeEventListener('message', handleMessage)
     }
-  }, [hasBookings])
+  }, [shouldShow])
 
-  if (!hasBookings) return null
+  if (!shouldShow) return null
 
   return (
     <AmeliaChat

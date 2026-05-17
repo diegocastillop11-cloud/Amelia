@@ -17,9 +17,19 @@ export default async function DashboardLayout({
   let plan = 'free'
   let modules: Record<string, boolean> | null = null
 
+  let hasSite = false
+
   if (!isSuperAdmin) {
-    const { data: biz } = await supabase.from('businesses').select('id').eq('owner_id', user.id).maybeSingle()
+    const { data: biz } = await supabase
+      .from('businesses')
+      .select('id, sites(content)')
+      .eq('owner_id', user.id)
+      .maybeSingle()
+
     if (biz) {
+      const siteContent = Array.isArray(biz.sites) ? biz.sites[0]?.content : (biz.sites as { content: unknown } | null)?.content
+      hasSite = !!(siteContent && (siteContent as Record<string, unknown>)?.hero)
+
       const { data: lic } = await supabase.from('licenses')
         .select('plan, modules').eq('business_id', biz.id).maybeSingle()
       if (lic) { plan = lic.plan; modules = lic.modules }
@@ -31,7 +41,7 @@ export default async function DashboardLayout({
       {isSuperAdmin ? (
         <AdminSidebar />
       ) : (
-        <Sidebar userEmail={user.email ?? ''} plan={plan} modules={modules} />
+        <Sidebar userEmail={user.email ?? ''} plan={plan} modules={modules} hasSite={hasSite} />
       )}
       <main className="flex-1 overflow-y-auto">{children}</main>
     </div>

@@ -44,12 +44,19 @@ export interface SiteContent {
   }[]
   reviews?: SiteReview[]
   gallery?: string[]
+  htmlSite?: string
+  benefits?: { icon: string; title: string; desc: string }[]
+  steps?: { title: string; desc: string }[]
+  faq?: { q: string; a: string }[]
+  pricing?: { title: string; price?: string; desc: string; highlighted?: boolean }[]
   contact: {
     cta: string
     phone?: string
     address?: string
     whatsapp?: string
     instagram?: string
+    facebook?: string
+    tiktok?: string
   }
   footer: {
     tagline: string

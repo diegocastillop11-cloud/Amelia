@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import type { SiteContent } from '@/types/database'
 
 type TemplateId = 'moderna' | 'clasica' | 'dark' | 'vibrante' | 'elegante' | 'minimalista' | 'bold' | 'sunset' | 'glass'
-interface Service { name: string; description: string; price: string; image?: string }
+interface Service { name: string; description: string; price: string; image?: string; featured?: boolean }
 
 interface Props {
   businessId: string; businessName: string; businessSlug: string
@@ -74,7 +74,9 @@ const FONTS = [
 ]
 const SECTIONS_LIST = [
   {key:'hero',label:'Hero'},{key:'nosotros',label:'Nosotros'},{key:'servicios',label:'Servicios'},
-  {key:'galeria',label:'Galería'},{key:'resenas',label:'Reseñas'},{key:'contacto',label:'Contacto'},
+  {key:'precios',label:'Precios'},{key:'pasos',label:'Proceso'},{key:'beneficios',label:'Beneficios'},
+  {key:'resenas',label:'Reseñas'},{key:'faq',label:'FAQ'},
+  {key:'galeria',label:'Galería'},{key:'contacto',label:'Contacto'},
 ]
 
 function deepSet(obj: Record<string,unknown>, path: string, val: unknown): Record<string,unknown> {
@@ -102,20 +104,30 @@ function onLeaveHover(e: React.MouseEvent<HTMLElement>) {
 }
 
 // ── ✅ Service card como componente separado — evita el bug de hooks en map ──
-function ServiceCard({ s, i, color, dark, vib, onChangeSvc, onUploadImg, onRemove }: {
+function ServiceCard({ s, i, color, dark, vib, onChangeSvc, onUploadImg, onRemove, onToggleFeatured }: {
   s: Service; i: number; color: string; dark: boolean; vib: boolean
   onChangeSvc: (i: number, f: keyof Service, v: string) => void
   onUploadImg: (i: number, file: File) => void
   onRemove: (i: number) => void
+  onToggleFeatured: (i: number) => void
 }) {
   const imgRef = useRef<HTMLInputElement>(null)  // ✅ hook en componente, no en map
   const fg    = dark||vib ? 'white' : '#111827'
   const muted = dark ? 'rgba(255,255,255,0.5)' : vib ? 'rgba(255,255,255,0.75)' : '#9ca3af'
   const bg    = dark ? 'rgba(255,255,255,0.04)' : vib ? 'rgba(255,255,255,0.15)' : 'white'
-  const brd   = dark ? 'rgba(255,255,255,0.08)' : '#f0f0f0'
+  const brd   = s.featured ? color : (dark ? 'rgba(255,255,255,0.08)' : '#f0f0f0')
 
   return (
-    <div style={{background:bg,border:`1px solid ${brd}`,borderRadius:14,overflow:'hidden',position:'relative'}}>
+    <div style={{background:bg,border:`1.5px solid ${brd}`,borderRadius:14,overflow:'hidden',position:'relative'}}>
+      {/* Badge "Más popular" si está marcado */}
+      {s.featured && (
+        <div style={{position:'absolute',top:0,left:'50%',transform:'translateX(-50%)',
+                     background:color,color:'white',fontSize:'0.625rem',fontWeight:700,
+                     padding:'2px 10px',borderRadius:'0 0 8px 8px',letterSpacing:'0.04em',
+                     textTransform:'uppercase',zIndex:3,whiteSpace:'nowrap'}}>
+          Más popular
+        </div>
+      )}
       <button onClick={()=>onRemove(i)}
               style={{position:'absolute',top:6,right:6,zIndex:2,width:22,height:22,borderRadius:'50%',border:'none',background:'rgba(239,68,68,0.2)',color:'#fca5a5',fontSize:11,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
       <input ref={imgRef} type="file" accept="image/*" style={{display:'none'}}
@@ -135,13 +147,22 @@ function ServiceCard({ s, i, color, dark, vib, onChangeSvc, onUploadImg, onRemov
              style={{...eBase,color:muted,fontSize:'0.8125rem',lineHeight:1.6,marginBottom:'0.5rem'}}
              onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);onChangeSvc(i,'description',e.currentTarget.innerText.trim())}}
              onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{s.description}</div>
-        <div style={{display:'flex',alignItems:'center',gap:'0.375rem'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'0.375rem',marginBottom:'0.625rem'}}>
           <span style={{fontSize:'0.75rem',color:muted}}>Precio:</span>
           <div contentEditable suppressContentEditableWarning
                style={{...eBase,color,fontWeight:700,fontSize:'0.875rem',minWidth:40}}
                onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);onChangeSvc(i,'price',e.currentTarget.innerText.trim())}}
                onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{s.price||'Agregar precio'}</div>
         </div>
+        {/* Toggle "Más popular" */}
+        <button onClick={()=>onToggleFeatured(i)}
+                style={{width:'100%',padding:'0.375rem',borderRadius:7,border:`1px solid ${s.featured?color:'rgba(99,102,241,0.2)'}`,
+                        background:s.featured?`${color}18`:'transparent',
+                        color:s.featured?color:muted,fontSize:'0.75rem',fontWeight:s.featured?700:400,
+                        cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:5,
+                        transition:'all 0.15s'}}>
+          {s.featured ? '⭐ Más popular (activo)' : '☆ Marcar como más popular'}
+        </button>
       </div>
     </div>
   )
@@ -165,7 +186,7 @@ export default function SiteEditorClient({
   const [gallery,   setGallery]   = useState<string[]>((initialContent.gallery??[]) as string[])
   const [viewport,  setViewport]  = useState<'desktop'|'movil'>('desktop')
   const [panel,     setPanel]     = useState<'plantilla'|'secciones'|'acciones'>('plantilla')
-  const [sections,  setSections]  = useState({hero:true,nosotros:true,servicios:true,galeria:true,resenas:true,contacto:true})
+  const [sections,  setSections]  = useState({hero:true,nosotros:true,servicios:true,precios:true,pasos:true,beneficios:true,resenas:true,faq:true,galeria:true,contacto:true})
   const [saveState, setSaveState] = useState<'saved'|'saving'|'unsaved'>('saved')
   const [published, setPublished] = useState(initPublished)
   const [publishing,setPublishing]= useState(false)
@@ -233,6 +254,16 @@ export default function SiteEditorClient({
     const r=await fetch('/api/upload-image',{method:'POST',body:fd}); const d=await r.json()
     if(!r.ok){alert(d.error);return}; editSvc(i,'image',d.url)
   },[editSvc])
+
+  const toggleFeatured = useCallback((i: number) => {
+    setContent(prev => {
+      const svcs = [...prev.services] as Service[]
+      svcs.forEach((s, idx) => { svcs[idx] = { ...s, featured: idx === i ? !s.featured : false } })
+      const next = { ...prev, services: svcs }
+      sched(next, name, color, template)
+      return next
+    })
+  }, [name, color, template, sched])
 
   const removeSvc=(i:number)=>{
     setContent(prev=>{const next={...prev,services:prev.services.filter((_,idx)=>idx!==i)};sched(next,name,color,template);return next})
@@ -597,6 +628,18 @@ export default function SiteEditorClient({
                   </div>
                 ))}
                 <button onClick={()=>{const next={...content,reviews:[...(content.reviews??[]),{author:'Nombre',rating:5,text:'Excelente servicio.'}]};setContent(next);sched(next,name,color,template)}} style={{padding:7,borderRadius:8,border:'1px dashed rgba(99,102,241,0.3)',background:'rgba(99,102,241,0.06)',color:'#a5b4fc',fontSize:10,fontWeight:600,cursor:'pointer',fontFamily:'Inter,sans-serif'}}>+ Agregar reseña</button>
+
+                {/* ── Agregar secciones vacías ── */}
+                <div style={{borderTop:'1px solid rgba(255,255,255,0.06)',paddingTop:10,marginTop:8}}>
+                  <p style={{fontSize:10,fontWeight:700,color:'#8b8bab',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:6}}>Agregar secciones</p>
+                  <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                    {!(content.faq??[]).length&&<button onClick={()=>{const next={...content,faq:[{q:'¿Cuánto tiempo tarda el servicio?',a:'Generalmente entre 30 y 60 minutos.'},{q:'¿Tienen garantía?',a:'Sí, todos nuestros servicios tienen garantía.'}]};setContent(next);sched(next,name,color,template)}} style={{padding:'6px 10px',borderRadius:7,border:'1px dashed rgba(99,102,241,0.3)',background:'rgba(99,102,241,0.06)',color:'#a5b4fc',fontSize:10,fontWeight:600,cursor:'pointer',textAlign:'left',fontFamily:'Inter,sans-serif'}}>❓ Agregar FAQ</button>}
+                    {!(content.pricing??[]).length&&<button onClick={()=>{const next={...content,pricing:[{title:'Básico',price:'',desc:'Ideal para comenzar.',highlighted:false},{title:'Pro',price:'',desc:'Nuestro plan más popular.',highlighted:true}]};setContent(next);sched(next,name,color,template)}} style={{padding:'6px 10px',borderRadius:7,border:'1px dashed rgba(99,102,241,0.3)',background:'rgba(99,102,241,0.06)',color:'#a5b4fc',fontSize:10,fontWeight:600,cursor:'pointer',textAlign:'left',fontFamily:'Inter,sans-serif'}}>💲 Agregar sección de precios</button>}
+                    {!(content.steps??[]).length&&<button onClick={()=>{const next={...content,steps:[{title:'Contacta',desc:'Escríbenos o llama.'},{title:'Agenda',desc:'Elige día y hora.'},{title:'Confirmación',desc:'Te avisamos al instante.'},{title:'Listo',desc:'Disfruta el servicio.'}]};setContent(next);sched(next,name,color,template)}} style={{padding:'6px 10px',borderRadius:7,border:'1px dashed rgba(99,102,241,0.3)',background:'rgba(99,102,241,0.06)',color:'#a5b4fc',fontSize:10,fontWeight:600,cursor:'pointer',textAlign:'left',fontFamily:'Inter,sans-serif'}}>🔢 Agregar proceso (pasos)</button>}
+                    {!(content.benefits??[]).length&&<button onClick={()=>{const next={...content,benefits:[{icon:'⚡',title:'Rápido',desc:'Atención inmediata.'},{icon:'🏆',title:'Calidad',desc:'Años de experiencia.'},{icon:'💬',title:'Soporte 24/7',desc:'Siempre disponibles.'}]};setContent(next);sched(next,name,color,template)}} style={{padding:'6px 10px',borderRadius:7,border:'1px dashed rgba(99,102,241,0.3)',background:'rgba(99,102,241,0.06)',color:'#a5b4fc',fontSize:10,fontWeight:600,cursor:'pointer',textAlign:'left',fontFamily:'Inter,sans-serif'}}>✅ Agregar beneficios</button>}
+                  </div>
+                </div>
+
                 <div style={{marginTop:8,borderTop:'1px solid rgba(255,255,255,0.06)',paddingTop:10,display:'flex',flexDirection:'column',gap:4}}>
                   <a href="/dashboard/sitio" style={{display:'block',padding:'7px 10px',borderRadius:7,border:'1px solid rgba(255,255,255,0.06)',background:'rgba(255,255,255,0.03)',color:'#8b8bab',fontSize:10,textDecoration:'none'}}>🔄 Regenerar con IA</a>
                   <button onClick={()=>save(content,name,color,template)} style={{padding:'7px 10px',borderRadius:7,border:'1px solid rgba(255,255,255,0.06)',background:'rgba(255,255,255,0.03)',color:'#8b8bab',fontSize:10,cursor:'pointer',textAlign:'left',fontFamily:'Inter,sans-serif'}}>💾 Guardar ahora</button>
@@ -686,7 +729,7 @@ export default function SiteEditorClient({
                           {/* ✅ ServiceCard como componente separado — sin hooks en map */}
                           {(content.services as Service[]).map((s,i)=>(
                             <ServiceCard key={i} s={s} i={i} color={color} dark={dark} vib={vib}
-                              onChangeSvc={editSvc} onUploadImg={uploadSvcImg} onRemove={removeSvc}/>
+                              onChangeSvc={editSvc} onUploadImg={uploadSvcImg} onRemove={removeSvc} onToggleFeatured={toggleFeatured}/>
                           ))}
                           <button onClick={addSvc} style={{background:'transparent',border:`2px dashed ${dark?'rgba(99,102,241,0.3)':`${color}40`}`,borderRadius:12,padding:'2rem 1rem',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'0.5rem',minHeight:180,fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.background=`${color}10`;e.currentTarget.style.borderColor=color}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor=`${color}40`}}>
                             <div style={{width:40,height:40,borderRadius:'50%',background:`${color}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.5rem',color}}>+</div>
@@ -729,6 +772,95 @@ export default function SiteEditorClient({
                           <p style={{color:muted,fontSize:'0.875rem',lineHeight:1.7,fontStyle:'italic'}}>"{r.text}"</p>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* PRECIOS */}
+                {sections.precios&&(content.pricing??[]).length>0&&(
+                  <div style={{padding:'3.5rem 2rem',background:dark?'#0d0d14':'white'}}>
+                    <h2 style={{fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}}>Precios</h2>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:'1rem',maxWidth:'960px',margin:'0 auto'}}>
+                      {(content.pricing??[]).map((p,i)=>(
+                        <div key={i} style={{background:dark?'rgba(255,255,255,0.04)':p.highlighted?`${color}08`:'#f9fafb',border:`${p.highlighted?2:1}px solid ${p.highlighted?color:brd}`,borderRadius:14,padding:'1.75rem 1.5rem',textAlign:'center',position:'relative'}}>
+                          {p.highlighted&&<span style={{position:'absolute',top:-11,left:'50%',transform:'translateX(-50%)',background:color,color:'white',fontSize:10,fontWeight:700,padding:'2px 10px',borderRadius:20,textTransform:'uppercase',whiteSpace:'nowrap'}}>Más popular</span>}
+                          <button onClick={()=>{const next={...content,pricing:(content.pricing??[]).filter((_,idx)=>idx!==i)};setContent(next);sched(next,name,color,template)}} style={{position:'absolute',top:6,right:6,width:20,height:20,borderRadius:'50%',border:'none',background:'rgba(239,68,68,0.2)',color:'#fca5a5',fontSize:10,cursor:'pointer'}}>✕</button>
+                          <div contentEditable suppressContentEditableWarning style={{...eBase,fontWeight:700,color:navFg,fontSize:'1rem',marginBottom:'0.5rem'}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);const pr=[...(content.pricing??[])];pr[i]={...pr[i],title:e.currentTarget.innerText.trim()};const next={...content,pricing:pr};setContent(next);sched(next,name,color,template)}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{p.title}</div>
+                          {p.price&&<div contentEditable suppressContentEditableWarning style={{...eBase,fontSize:'1.75rem',fontWeight:800,color,marginBottom:'0.75rem',display:'block'}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);const pr=[...(content.pricing??[])];pr[i]={...pr[i],price:e.currentTarget.innerText.trim()};const next={...content,pricing:pr};setContent(next);sched(next,name,color,template)}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{p.price}</div>}
+                          <div contentEditable suppressContentEditableWarning style={{...eBase,color:muted,fontSize:'0.875rem',lineHeight:1.6,marginBottom:'1rem',display:'block'}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);const pr=[...(content.pricing??[])];pr[i]={...pr[i],desc:e.currentTarget.innerText.trim()};const next={...content,pricing:pr};setContent(next);sched(next,name,color,template)}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{p.desc}</div>
+                          <button onClick={()=>{const pr=[...(content.pricing??[])];pr[i]={...pr[i],highlighted:!pr[i].highlighted};const next={...content,pricing:pr};setContent(next);sched(next,name,color,template)}} style={{fontSize:10,padding:'4px 10px',borderRadius:6,border:`1px solid ${p.highlighted?color:'rgba(99,102,241,0.2)'}`,background:p.highlighted?`${color}18`:'transparent',color:p.highlighted?color:muted,cursor:'pointer',fontFamily:'inherit'}}>
+                            {p.highlighted?'⭐ Destacado':'☆ Marcar como destacado'}
+                          </button>
+                        </div>
+                      ))}
+                      <button onClick={()=>{const next={...content,pricing:[...(content.pricing??[]),{title:'Plan Básico',price:'',desc:'Descripción del plan.',highlighted:false}]};setContent(next);sched(next,name,color,template)}} style={{background:'transparent',border:`2px dashed ${color}40`,borderRadius:12,padding:'2rem 1rem',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'0.5rem',minHeight:140,fontFamily:'inherit',color}} onMouseEnter={e=>{e.currentTarget.style.background=`${color}10`}} onMouseLeave={e=>{e.currentTarget.style.background='transparent'}}>
+                        <span style={{fontSize:'1.5rem'}}>+</span>
+                        <span style={{fontSize:'0.8125rem',fontWeight:600}}>Agregar plan</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* PROCESO */}
+                {sections.pasos&&(content.steps??[]).length>0&&(
+                  <div style={{padding:'3.5rem 2rem',background:sectBg}}>
+                    <h2 style={{fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}}>¿Cómo funciona?</h2>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:'1.5rem',maxWidth:'860px',margin:'0 auto'}}>
+                      {(content.steps??[]).map((s,i)=>(
+                        <div key={i} style={{textAlign:'center',position:'relative'}}>
+                          <button onClick={()=>{const next={...content,steps:(content.steps??[]).filter((_,idx)=>idx!==i)};setContent(next);sched(next,name,color,template)}} style={{position:'absolute',top:-8,right:-8,width:20,height:20,borderRadius:'50%',border:'none',background:'rgba(239,68,68,0.2)',color:'#fca5a5',fontSize:10,cursor:'pointer'}}>✕</button>
+                          <div style={{width:48,height:48,borderRadius:'50%',background:`${color}22`,border:`2px solid ${color}55`,margin:'0 auto 1rem',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                            <span style={{fontSize:'1.25rem',fontWeight:800,color}}>{i+1}</span>
+                          </div>
+                          <div contentEditable suppressContentEditableWarning style={{...eBase,fontWeight:700,color:navFg,fontSize:'0.9375rem',marginBottom:'0.375rem',display:'block'}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);const st=[...(content.steps??[])];st[i]={...st[i],title:e.currentTarget.innerText.trim()};const next={...content,steps:st};setContent(next);sched(next,name,color,template)}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{s.title}</div>
+                          <div contentEditable suppressContentEditableWarning style={{...eBase,color:muted,fontSize:'0.8125rem',lineHeight:1.6,display:'block'}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);const st=[...(content.steps??[])];st[i]={...st[i],desc:e.currentTarget.innerText.trim()};const next={...content,steps:st};setContent(next);sched(next,name,color,template)}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{s.desc}</div>
+                        </div>
+                      ))}
+                      <div style={{textAlign:'center'}}>
+                        <button onClick={()=>{const next={...content,steps:[...(content.steps??[]),{title:'Nuevo paso',desc:'Descripción del paso.'}]};setContent(next);sched(next,name,color,template)}} style={{background:'transparent',border:`2px dashed ${color}40`,borderRadius:12,padding:'1.5rem 1rem',cursor:'pointer',color,fontFamily:'inherit',fontWeight:600,fontSize:'0.8125rem',width:'100%'}}>+ Agregar paso</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* BENEFICIOS */}
+                {sections.beneficios&&(content.benefits??[]).length>0&&(
+                  <div style={{padding:'3.5rem 2rem',background:dark?'rgba(255,255,255,0.02)':'#f9fafb'}}>
+                    <h2 style={{fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}}>¿Por qué elegirnos?</h2>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:'1.25rem',maxWidth:'960px',margin:'0 auto'}}>
+                      {(content.benefits??[]).map((b,i)=>(
+                        <div key={i} style={{background:dark?'rgba(255,255,255,0.04)':'white',border:`1px solid ${brd}`,borderRadius:14,padding:'1.5rem',display:'flex',gap:'1rem',position:'relative'}}>
+                          <button onClick={()=>{const next={...content,benefits:(content.benefits??[]).filter((_,idx)=>idx!==i)};setContent(next);sched(next,name,color,template)}} style={{position:'absolute',top:6,right:6,width:20,height:20,borderRadius:'50%',border:'none',background:'rgba(239,68,68,0.2)',color:'#fca5a5',fontSize:10,cursor:'pointer'}}>✕</button>
+                          <div contentEditable suppressContentEditableWarning style={{...eBase,fontSize:'2rem',flexShrink:0,display:'block'}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);const bn=[...(content.benefits??[])];bn[i]={...bn[i],icon:e.currentTarget.innerText.trim()};const next={...content,benefits:bn};setContent(next);sched(next,name,color,template)}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{b.icon}</div>
+                          <div style={{flex:1}}>
+                            <div contentEditable suppressContentEditableWarning style={{...eBase,fontWeight:700,color:navFg,fontSize:'1rem',marginBottom:'0.25rem',display:'block'}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);const bn=[...(content.benefits??[])];bn[i]={...bn[i],title:e.currentTarget.innerText.trim()};const next={...content,benefits:bn};setContent(next);sched(next,name,color,template)}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{b.title}</div>
+                            <div contentEditable suppressContentEditableWarning style={{...eBase,color:muted,fontSize:'0.875rem',lineHeight:1.6,display:'block'}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);const bn=[...(content.benefits??[])];bn[i]={...bn[i],desc:e.currentTarget.innerText.trim()};const next={...content,benefits:bn};setContent(next);sched(next,name,color,template)}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{b.desc}</div>
+                          </div>
+                        </div>
+                      ))}
+                      <button onClick={()=>{const next={...content,benefits:[...(content.benefits??[]),{icon:'✨',title:'Nuevo beneficio',desc:'Descripción del beneficio.'}]};setContent(next);sched(next,name,color,template)}} style={{background:'transparent',border:`2px dashed ${color}40`,borderRadius:12,padding:'1.5rem',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',color,fontFamily:'inherit',fontWeight:600,fontSize:'0.8125rem'}}>+ Agregar beneficio</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* FAQ */}
+                {sections.faq&&(content.faq??[]).length>0&&(
+                  <div style={{padding:'3.5rem 2rem',background:sectBg}}>
+                    <h2 style={{fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}}>Preguntas frecuentes</h2>
+                    <div style={{maxWidth:'720px',margin:'0 auto',display:'flex',flexDirection:'column',gap:'0.625rem'}}>
+                      {(content.faq??[]).map((item,i)=>(
+                        <div key={i} style={{border:`1px solid ${brd}`,borderRadius:12,overflow:'hidden'}}>
+                          <div style={{padding:'1rem 1.25rem',background:dark?'rgba(255,255,255,0.04)':'white',display:'flex',alignItems:'center',gap:8}}>
+                            <div contentEditable suppressContentEditableWarning style={{...eBase,fontWeight:600,color:navFg,fontSize:'0.9375rem',flex:1}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);const fa=[...(content.faq??[])];fa[i]={...fa[i],q:e.currentTarget.innerText.trim()};const next={...content,faq:fa};setContent(next);sched(next,name,color,template)}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{item.q}</div>
+                            <span style={{color,fontSize:'1.125rem',flexShrink:0}}>▾</span>
+                            <button onClick={()=>{const next={...content,faq:(content.faq??[]).filter((_,idx)=>idx!==i)};setContent(next);sched(next,name,color,template)}} style={{width:20,height:20,borderRadius:'50%',border:'none',background:'rgba(239,68,68,0.2)',color:'#fca5a5',fontSize:10,cursor:'pointer',flexShrink:0}}>✕</button>
+                          </div>
+                          <div style={{padding:'0.75rem 1.25rem 1rem',background:dark?'rgba(255,255,255,0.02)':'#f9fafb'}}>
+                            <div contentEditable suppressContentEditableWarning style={{...eBase,color:muted,fontSize:'0.9rem',lineHeight:1.7}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);const fa=[...(content.faq??[])];fa[i]={...fa[i],a:e.currentTarget.innerText.trim()};const next={...content,faq:fa};setContent(next);sched(next,name,color,template)}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{item.a}</div>
+                          </div>
+                        </div>
+                      ))}
+                      <button onClick={()=>{const next={...content,faq:[...(content.faq??[]),{q:'Nueva pregunta frecuente',a:'Respuesta a la pregunta.'}]};setContent(next);sched(next,name,color,template)}} style={{padding:'0.875rem',borderRadius:10,border:`2px dashed ${color}40`,background:'transparent',color,fontSize:'0.875rem',fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>+ Agregar pregunta</button>
                     </div>
                   </div>
                 )}

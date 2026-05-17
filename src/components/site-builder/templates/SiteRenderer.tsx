@@ -250,11 +250,14 @@ export function SiteRenderer({
           {/* Nav links + CTA */}
           {(() => {
             const defaultLinks = [
-              { label: 'Inicio',    anchor: 'inicio',    visible: true },
-              { label: 'Servicios', anchor: 'servicios', visible: true },
-              { label: 'Productos', anchor: 'productos', visible: products.length > 0 },
-              { label: 'Galería',   anchor: 'galeria',   visible: gallery.length > 0 },
-              { label: 'Contacto',  anchor: 'contacto',  visible: true },
+              { label: 'Inicio',      anchor: 'inicio',      visible: true },
+              { label: 'Servicios',   anchor: 'servicios',   visible: true },
+              { label: 'Precios',     anchor: 'precios',     visible: !!(content.pricing && content.pricing.length > 0) },
+              { label: 'Testimonios', anchor: 'testimonios', visible: !!(content.reviews && content.reviews.length > 0) },
+              { label: 'FAQ',         anchor: 'faq',         visible: !!(content.faq && content.faq.length > 0) },
+              { label: 'Productos',   anchor: 'productos',   visible: products.length > 0 },
+              { label: 'Galería',     anchor: 'galeria',     visible: gallery.length > 0 },
+              { label: 'Contacto',    anchor: 'contacto',    visible: true },
             ]
             const navLinks = content.nav
               ? content.nav.filter(l => l.visible)
@@ -431,99 +434,6 @@ export function SiteRenderer({
           )}
         </div>
 
-        {/* ── CONTACTO CTA ── */}
-        {(() => {
-          const c = content.contact
-          const phone   = c?.phone?.trim()
-          const wa      = c?.whatsapp?.trim()
-          const address = c?.address?.trim()
-          const ig      = c?.instagram?.trim()
-          const hasInfo = !!(phone || wa || address || ig)
-          const sectionBg = t.bold?'rgba(255,255,255,0.04)':t.dark?'#0d0d14':t.glass?'rgba(255,255,255,0.04)':t.vib?'rgba(0,0,0,0.15)':'#f9fafb'
-          const cardBg  = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.05)' : 'white'
-          const cardBrd = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.1)' : '#f0f0f0'
-          const waUrl   = wa ? `https://wa.me/${wa.replace(/\D/g,'')}` : null
-          const igUrl   = ig ? `https://instagram.com/${ig.replace('@','')}` : null
-
-          return (
-            <div style={{ padding: '5rem 2rem', background: sectionBg }}>
-              <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
-                <h2 style={{ fontSize: 'clamp(1.625rem,4vw,2.25rem)', fontWeight: 900, color: sectFg,
-                              margin: '0 0 0.75rem', letterSpacing: t.bold ? '-0.02em' : 'normal' }}>
-                  {c?.cta ?? '¿Listo para comenzar?'}
-                </h2>
-                <p style={{ color: muted, fontSize: '1.0625rem', margin: '0 auto 2.25rem',
-                             maxWidth: 480, lineHeight: 1.7 }}>
-                  Agenda en minutos, sin llamadas ni esperas.
-                </p>
-                <span dangerouslySetInnerHTML={{ __html:
-                  `<span ${openAmelia} style="display:inline-block;background:${color};color:white;padding:1rem 2.75rem;border-radius:12px;font-weight:800;font-size:1.0625rem;cursor:pointer;box-shadow:0 8px 28px ${color}45;transition:transform 0.15s,box-shadow 0.15s;letter-spacing:-0.01em" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 14px 36px ${color}55'" onmouseout="this.style.transform='';this.style.boxShadow='0 8px 28px ${color}45'">${content.hero.cta} ahora</span>`
-                }} />
-
-                {hasInfo && (
-                  <div style={{ marginTop: '3rem', display: 'grid',
-                                gridTemplateColumns: `repeat(auto-fit,minmax(180px,1fr))`,
-                                gap: '1rem', textAlign: 'left' }}>
-                    {phone && (
-                      <a href={`tel:${phone.replace(/\s/g,'')}`} style={{ textDecoration: 'none' }}>
-                        <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
-                                       padding: '1.125rem 1.25rem', display: 'flex', alignItems: 'center',
-                                       gap: '0.75rem', backdropFilter: t.glass?'blur(8px)':'none' }}>
-                          <span style={{ fontSize: '1.375rem' }}>📞</span>
-                          <div>
-                            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
-                                         textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Teléfono</p>
-                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{phone}</p>
-                          </div>
-                        </div>
-                      </a>
-                    )}
-                    {wa && waUrl && (
-                      <a href={waUrl} target="_blank" rel="noopener" style={{ textDecoration: 'none' }}>
-                        <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
-                                       padding: '1.125rem 1.25rem', display: 'flex', alignItems: 'center',
-                                       gap: '0.75rem', backdropFilter: t.glass?'blur(8px)':'none' }}>
-                          <span style={{ fontSize: '1.375rem' }}>💬</span>
-                          <div>
-                            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
-                                         textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>WhatsApp</p>
-                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{wa}</p>
-                          </div>
-                        </div>
-                      </a>
-                    )}
-                    {address && (
-                      <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
-                                     padding: '1.125rem 1.25rem', display: 'flex', alignItems: 'center',
-                                     gap: '0.75rem', backdropFilter: t.glass?'blur(8px)':'none' }}>
-                        <span style={{ fontSize: '1.375rem' }}>📍</span>
-                        <div>
-                          <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
-                                       textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Dirección</p>
-                          <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{address}</p>
-                        </div>
-                      </div>
-                    )}
-                    {ig && igUrl && (
-                      <a href={igUrl} target="_blank" rel="noopener" style={{ textDecoration: 'none' }}>
-                        <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
-                                       padding: '1.125rem 1.25rem', display: 'flex', alignItems: 'center',
-                                       gap: '0.75rem', backdropFilter: t.glass?'blur(8px)':'none' }}>
-                          <span style={{ fontSize: '1.375rem' }}>📸</span>
-                          <div>
-                            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted,
-                                         textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Instagram</p>
-                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{ig}</p>
-                          </div>
-                        </div>
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        })()}
 
         {/* ── PRODUCTOS ── */}
         {products.length > 0 && (
@@ -643,6 +553,118 @@ export function SiteRenderer({
           </div>
         )}
 
+        {/* ── BENEFICIOS ── */}
+        {content.benefits && content.benefits.length > 0 && (
+          <div style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : '#f9fafb' }}>
+            <div style={{ maxWidth: 960, margin: '0 auto' }}>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
+                            fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
+                ¿Por qué elegirnos?
+              </h2>
+              <p style={{ textAlign: 'center', color: t.muted, fontSize: '1rem', marginBottom: '3rem' }}>
+                Lo que nos hace diferentes
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1.25rem' }}>
+                {content.benefits.map((b, i) => (
+                  <div key={i} style={{
+                    background: (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : 'white',
+                    border: `1px solid ${t.border}`, borderRadius: 16, padding: '1.75rem',
+                    display: 'flex', gap: '1rem', alignItems: 'flex-start',
+                    backdropFilter: (t.glass || t.bold) ? 'blur(8px)' : 'none',
+                  }}>
+                    <span style={{ fontSize: '2rem', flexShrink: 0 }}>{b.icon}</span>
+                    <div>
+                      <p style={{ fontWeight: 700, color: sectFg, fontSize: '1rem', margin: '0 0 0.375rem' }}>{b.title}</p>
+                      <p style={{ color: t.muted, fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>{b.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── CÓMO FUNCIONA ── */}
+        {content.steps && content.steps.length > 0 && (
+          <div style={{ padding: '5rem 2rem', background: t.sectBg }}>
+            <div style={{ maxWidth: 860, margin: '0 auto' }}>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
+                            fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
+                ¿Cómo funciona?
+              </h2>
+              <p style={{ textAlign: 'center', color: t.muted, fontSize: '1rem', marginBottom: '3rem' }}>
+                Simple y rápido — así trabajamos
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '1.5rem' }}>
+                {content.steps.map((s, i) => (
+                  <div key={i} style={{ textAlign: 'center' }}>
+                    <div style={{
+                      width: 52, height: 52, borderRadius: '50%', margin: '0 auto 1rem',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: `linear-gradient(135deg, ${color}22, ${color}44)`,
+                      border: `2px solid ${color}55`,
+                    }}>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 800, color: color }}>{i + 1}</span>
+                    </div>
+                    <p style={{ fontWeight: 700, color: sectFg, fontSize: '1rem', margin: '0 0 0.5rem' }}>{s.title}</p>
+                    <p style={{ color: t.muted, fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── PRECIOS ── */}
+        {content.pricing && content.pricing.length > 0 && (
+          <div id="precios" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : 'white' }}>
+            <div style={{ maxWidth: 900, margin: '0 auto' }}>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
+                            fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
+                Información y precios
+              </h2>
+              <p style={{ textAlign: 'center', color: t.muted, fontSize: '1rem', marginBottom: '3rem' }}>
+                Transparencia total, sin sorpresas
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '1.25rem' }}>
+                {content.pricing.map((p, i) => (
+                  <div key={i} style={{
+                    background: p.highlighted
+                      ? `linear-gradient(135deg, ${color}18, ${color}08)`
+                      : (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : '#f9fafb',
+                    border: p.highlighted ? `2px solid ${color}66` : `1px solid ${t.border}`,
+                    borderRadius: 16, padding: '2rem', textAlign: 'center', position: 'relative',
+                    backdropFilter: (t.glass || t.bold) ? 'blur(8px)' : 'none',
+                  }}>
+                    {p.highlighted && (
+                      <span style={{
+                        position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
+                        background: color, color: 'white', fontSize: '0.6875rem', fontWeight: 700,
+                        padding: '3px 12px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.05em',
+                      }}>
+                        Más popular
+                      </span>
+                    )}
+                    <p style={{ fontWeight: 700, color: sectFg, fontSize: '1.125rem', margin: '0 0 0.5rem' }}>{p.title}</p>
+                    {p.price && (
+                      <p style={{ fontSize: '1.75rem', fontWeight: 800, color: color, margin: '0 0 1rem' }}>{p.price}</p>
+                    )}
+                    <p style={{ color: t.muted, fontSize: '0.875rem', lineHeight: 1.6, margin: '0 0 1.5rem' }}>{p.desc}</p>
+                    <div dangerouslySetInnerHTML={{ __html:
+                      `<span onclick="document.getElementById('contacto')?.scrollIntoView({behavior:'smooth'})"
+                        style="display:inline-block;padding:0.625rem 1.5rem;border-radius:10px;font-size:0.875rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;
+                        background:${p.highlighted ? color : 'transparent'};color:${p.highlighted ? 'white' : color};
+                        border:2px solid ${color}" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                        Consultar
+                      </span>`
+                    }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── GALERÍA ── */}
         {gallery.length > 0 && (
           <div id="galeria" style={{ padding: '4rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.02)' : 'white' }}>
@@ -673,7 +695,7 @@ export function SiteRenderer({
 
         {/* ── RESEÑAS ── */}
         {content.reviews && content.reviews.length > 0 && (
-          <div style={{ padding: '4rem 2rem', background: t.sectBg }}>
+          <div id="testimonios" style={{ padding: '4rem 2rem', background: t.sectBg }}>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '2.5rem', color: sectFg }}>
               Lo que dicen nuestros clientes
             </h2>
@@ -698,37 +720,167 @@ export function SiteRenderer({
           </div>
         )}
 
-        {/* ── FORMULARIO DE CONTACTO ── */}
-        {slug && (
-          <div id="contacto" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : 'white' }}>
-            <div style={{ maxWidth: 540, margin: '0 auto' }}>
-              <h2 style={{ fontSize: '1.625rem', fontWeight: 800, color: sectFg, margin: '0 0 0.5rem', textAlign: 'center',
+        {/* ── FAQ ── */}
+        {content.faq && content.faq.length > 0 && (
+          <div id="faq" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : '#f9fafb' }}>
+            <div style={{ maxWidth: 720, margin: '0 auto' }}>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
                             fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
-                Envíanos un mensaje
+                Preguntas frecuentes
               </h2>
-              <p style={{ color: t.muted, fontSize: '0.9375rem', textAlign: 'center', margin: '0 0 2.25rem', lineHeight: 1.6 }}>
-                Te responderemos a la brevedad.
+              <p style={{ textAlign: 'center', color: t.muted, fontSize: '1rem', marginBottom: '3rem' }}>
+                Respondemos las dudas más comunes
               </p>
-              <div dangerouslySetInnerHTML={{ __html: `
-                <form id="amelia-contact-form" onsubmit="window.__ameliaContact(event)" style="display:flex;flex-direction:column;gap:14px">
-                  <div>
-                    <label style="display:block;font-size:12px;font-weight:700;color:${t.muted};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Nombre *</label>
-                    <input name="senderName" required placeholder="Tu nombre" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid ${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'};background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.06)':'#f9fafb'};color:${t.fg};font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'}'" />
-                  </div>
-                  <div>
-                    <label style="display:block;font-size:12px;font-weight:700;color:${t.muted};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Email (opcional)</label>
-                    <input name="senderEmail" type="email" placeholder="tu@email.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid ${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'};background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.06)':'#f9fafb'};color:${t.fg};font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'}'" />
-                  </div>
-                  <div>
-                    <label style="display:block;font-size:12px;font-weight:700;color:${t.muted};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Mensaje *</label>
-                    <textarea name="message" required rows="4" placeholder="¿En qué podemos ayudarte?" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid ${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'};background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.06)':'#f9fafb'};color:${t.fg};font-size:14px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.12)':'#e5e7eb'}'"></textarea>
-                  </div>
-                  <button id="amelia-contact-btn" type="submit" style="width:100%;padding:13px;border-radius:10px;border:none;background:${color};color:white;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s;letter-spacing:-0.01em" onmouseover="this.style.opacity='0.87'" onmouseout="this.style.opacity='1'">Enviar mensaje</button>
-                  <p id="amelia-contact-msg" style="text-align:center;font-size:13px;font-weight:600;margin:0"></p>
-                </form>` }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {content.faq.map((item, i) => (
+                  <div key={i} dangerouslySetInnerHTML={{ __html:
+                    `<div style="border:1px solid ${t.border};border-radius:12px;overflow:hidden">
+                      <button onclick="var a=this.nextElementSibling;var arr=this.querySelector('span');if(a.style.display==='none'){a.style.display='block';arr.style.transform='rotate(180deg)'}else{a.style.display='none';arr.style.transform=''}"
+                        style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:1.125rem 1.375rem;background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.05)':'white'};border:none;cursor:pointer;text-align:left;gap:1rem;font-family:inherit">
+                        <span style="font-weight:600;font-size:0.9375rem;color:${sectFg};line-height:1.5">${item.q}</span>
+                        <span style="font-size:1.125rem;color:${color};flex-shrink:0;transition:transform 0.2s">▾</span>
+                      </button>
+                      <div style="display:none;padding:1rem 1.375rem 1.25rem;background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.03)':'#f9fafb'}">
+                        <p style="color:${t.muted};font-size:0.9375rem;line-height:1.7;margin:0">${item.a}</p>
+                      </div>
+                    </div>`
+                  }} />
+                ))}
+              </div>
             </div>
           </div>
         )}
+
+        {/* ── CONTACTO (info + formulario unificados) ── */}
+        {slug && (() => {
+          const c       = content.contact
+          const phone   = c?.phone?.trim()
+          const wa      = c?.whatsapp?.trim()
+          const address = c?.address?.trim()
+          const ig      = c?.instagram?.trim()
+          const waUrl   = wa ? `https://wa.me/${wa.replace(/\D/g,'')}` : null
+          const igUrl   = ig ? `https://instagram.com/${ig.replace('@','')}` : null
+          const cardBg  = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.05)' : t.vib ? 'rgba(255,255,255,0.15)' : '#f9fafb'
+          const cardBrd = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.1)' : '#e5e7eb'
+          const inBg    = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.06)' : '#f9fafb'
+          const inBrd   = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.12)' : '#e5e7eb'
+          return (
+            <div id="contacto" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : 'white' }}>
+              <div style={{ maxWidth: 960, margin: '0 auto' }}>
+                {/* Título centrado */}
+                <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                  <h2 style={{ fontSize: 'clamp(1.625rem,4vw,2.25rem)', fontWeight: 900, color: sectFg,
+                                margin: '0 0 0.625rem', letterSpacing: t.bold ? '-0.02em' : 'normal',
+                                fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
+                    {c?.cta ?? 'Contáctanos'}
+                  </h2>
+                  <p style={{ color: muted, fontSize: '1rem', margin: 0, lineHeight: 1.7 }}>
+                    Te respondemos a la brevedad.
+                  </p>
+                </div>
+
+                {/* Grid: info izq | formulario der */}
+                <div style={{ display: 'grid', gridTemplateColumns: (phone||wa||address||ig) ? 'minmax(0,1fr) minmax(0,1fr)' : '1fr', gap: '3rem', alignItems: 'start' }}>
+
+                  {/* Columna izquierda: CTA + datos de contacto + redes */}
+                  {(phone||wa||address||ig) && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {/* Botón principal */}
+                      <span dangerouslySetInnerHTML={{ __html:
+                        `<span ${openAmelia} style="display:inline-flex;align-items:center;justify-content:center;background:${color};color:white;padding:0.875rem 2rem;border-radius:12px;font-weight:800;font-size:1rem;cursor:pointer;box-shadow:0 8px 24px ${color}40;transition:transform 0.15s,box-shadow 0.15s;letter-spacing:-0.01em" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">✨ ${content.hero.cta}</span>`
+                      }} />
+
+                      {/* Tarjetas de info */}
+                      {phone && (
+                        <a href={`tel:${phone.replace(/\s/g,'')}`} style={{ textDecoration: 'none' }}>
+                          <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
+                                         padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ fontSize: '1.25rem' }}>📞</span>
+                            <div>
+                              <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Teléfono</p>
+                              <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{phone}</p>
+                            </div>
+                          </div>
+                        </a>
+                      )}
+                      {wa && waUrl && (
+                        <a href={waUrl} target="_blank" rel="noopener" style={{ textDecoration: 'none' }}>
+                          <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
+                                         padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ fontSize: '1.25rem' }}>💬</span>
+                            <div>
+                              <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>WhatsApp</p>
+                              <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{wa}</p>
+                            </div>
+                          </div>
+                        </a>
+                      )}
+                      {address && (
+                        <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
+                                       padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ fontSize: '1.25rem' }}>📍</span>
+                          <div>
+                            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Dirección</p>
+                            <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{address}</p>
+                          </div>
+                        </div>
+                      )}
+                      {ig && igUrl && (
+                        <a href={igUrl} target="_blank" rel="noopener" style={{ textDecoration: 'none' }}>
+                          <div style={{ background: cardBg, border: `1px solid ${cardBrd}`, borderRadius: 14,
+                                         padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ fontSize: '1.25rem' }}>📸</span>
+                            <div>
+                              <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>Instagram</p>
+                              <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: sectFg, margin: 0 }}>{ig}</p>
+                            </div>
+                          </div>
+                        </a>
+                      )}
+
+                      {/* Botones redes sociales */}
+                      {(wa || ig) && (
+                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          {wa && waUrl && (
+                            <a href={waUrl} target="_blank" rel="noopener" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'0.6rem 1.125rem', borderRadius:8, background:'#25D366', color:'white', fontWeight:700, fontSize:'0.875rem', textDecoration:'none' }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                              WhatsApp
+                            </a>
+                          )}
+                          {ig && igUrl && (
+                            <a href={igUrl} target="_blank" rel="noopener" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'0.6rem 1.125rem', borderRadius:8, background:'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', color:'white', fontWeight:700, fontSize:'0.875rem', textDecoration:'none' }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                              Instagram
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Columna derecha: formulario */}
+                  <div style={{ paddingTop: (phone||wa||address||ig) ? '4rem' : 0 }} dangerouslySetInnerHTML={{ __html: `
+                    <form id="amelia-contact-form" onsubmit="window.__ameliaContact(event)" style="display:flex;flex-direction:column;gap:14px">
+                      <div>
+                        <label style="display:block;font-size:12px;font-weight:700;color:${muted};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Nombre *</label>
+                        <input name="senderName" required placeholder="Tu nombre" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid ${inBrd};background:${inBg};color:${sectFg};font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='${inBrd}'" />
+                      </div>
+                      <div>
+                        <label style="display:block;font-size:12px;font-weight:700;color:${muted};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Email (opcional)</label>
+                        <input name="senderEmail" type="email" placeholder="tu@email.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid ${inBrd};background:${inBg};color:${sectFg};font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='${inBrd}'" />
+                      </div>
+                      <div>
+                        <label style="display:block;font-size:12px;font-weight:700;color:${muted};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Mensaje *</label>
+                        <textarea name="message" required rows="4" placeholder="¿En qué podemos ayudarte?" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid ${inBrd};background:${inBg};color:${sectFg};font-size:14px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='${inBrd}'"></textarea>
+                      </div>
+                      <button id="amelia-contact-btn" type="submit" style="width:100%;padding:13px;border-radius:10px;border:none;background:${color};color:white;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s;letter-spacing:-0.01em" onmouseover="this.style.opacity='0.87'" onmouseout="this.style.opacity='1'">Enviar mensaje</button>
+                      <p id="amelia-contact-msg" style="text-align:center;font-size:13px;font-weight:600;margin:0"></p>
+                    </form>` }} />
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ── FOOTER ── */}
         <div style={{ background: t.dark ? '#050508' : '#111827', padding: '3rem 2rem', textAlign: 'center' }}>
@@ -749,6 +901,20 @@ export function SiteRenderer({
             Sitio creado con <span style={{ color }}> Amelia</span>
           </p>
         </div>
+
+        {/* ── WA FLOAT ── */}
+        {content.contact?.whatsapp && (
+          <a href={`https://wa.me/${content.contact.whatsapp.replace(/\D/g,'')}`}
+             target="_blank" rel="noopener"
+             style={{
+               position: 'fixed', bottom: '7.5rem', right: '1.5rem', zIndex: 999,
+               width: 56, height: 56, borderRadius: '50%',
+               background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center',
+               boxShadow: '0 4px 20px rgba(37,211,102,0.4)', textDecoration: 'none',
+             }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          </a>
+        )}
 
         {/* ── LIGHTBOX ── */}
         <div dangerouslySetInnerHTML={{ __html:

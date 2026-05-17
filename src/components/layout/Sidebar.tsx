@@ -4,9 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { PLAN_DEFAULTS, ModuleKey } from '@/lib/modules'
 
-const NAV: { href: string; icon: string; label: string; exact?: boolean; root?: string; moduleKey?: ModuleKey }[] = [
+const BASE_NAV: { href: string; icon: string; label: string; exact?: boolean; root?: string; moduleKey?: ModuleKey }[] = [
   { href: '/dashboard',                  icon: '⚡', label: 'Inicio',     exact: true  },
-  { href: '/dashboard/sitio/editor',     icon: '🌐', label: 'Editar Sitio', root: '/dashboard/sitio' },
   { href: '/dashboard/reservas',         icon: '📅', label: 'Reservas',   moduleKey: 'reservas' },
   { href: '/dashboard/clientes',         icon: '👥', label: 'Clientes',   moduleKey: 'clientes' },
   { href: '/dashboard/horarios',         icon: '🕐', label: 'Horarios',   moduleKey: 'horarios' },
@@ -14,6 +13,7 @@ const NAV: { href: string; icon: string; label: string; exact?: boolean; root?: 
   { href: '/dashboard/pedidos',          icon: '🛒', label: 'Pedidos',    moduleKey: 'productos' },
   { href: '/dashboard/metricas',          icon: '📊', label: 'Métricas',      moduleKey: 'metricas' },
   { href: '/dashboard/asistente',        icon: '🤖', label: 'Asistente IA'  },
+  { href: '/dashboard/marketing',        icon: '📣', label: 'Marketing IA'   },
   { href: '/dashboard/recordatorios',    icon: '🔔', label: 'Recordatorios', moduleKey: 'recordatorios' },
   { href: '/dashboard/settings',         icon: '⚙️', label: 'Ajustes'   },
 ]
@@ -22,11 +22,18 @@ interface Props {
   userEmail?: string
   plan?: string
   modules?: Record<string, boolean> | null
+  hasSite?: boolean
 }
 
-export default function Sidebar({ userEmail, plan = 'free', modules }: Props) {
+export default function Sidebar({ userEmail, plan = 'free', modules, hasSite = false }: Props) {
   const path = usePathname()
   const activeModules = modules ?? PLAN_DEFAULTS[plan] ?? PLAN_DEFAULTS.free
+
+  const siteItem: { href: string; icon: string; label: string; exact?: boolean; root?: string; moduleKey?: ModuleKey } = hasSite
+    ? { href: '/dashboard/sitio/editor', icon: '🌐', label: 'Editar Sitio', root: '/dashboard/sitio' }
+    : { href: '/dashboard/sitio',        icon: '✨', label: 'Crear Sitio',  root: '/dashboard/sitio' }
+
+  const NAV = [BASE_NAV[0], siteItem, ...BASE_NAV.slice(1)]
 
   return (
     <aside style={{ width: 220, background: 'var(--bg-surface)', borderRight: '1px solid var(--border)',

@@ -8,6 +8,7 @@ SaaS chileno para pequeños negocios: genera sitios web con IA, gestiona reserva
 ### Reglas de comunicación
 - **Siempre responder en español**, sin excepción.
 - **Trabajar con planes de acción**: antes de implementar algo no trivial, presentar un plan numerado breve (3-5 pasos), esperar confirmación, luego ejecutar paso a paso.
+- **Siempre corrige solo lo que el usuario esta solicitando, no toques nada mas del codigo que no sea lo que se pidio modificar.
 
 ### Contexto de producto
 - Amelia es para **cualquier tipo de negocio** — barberías, pastelerías, consultas médicas, ventas de productos, etc. Las métricas, textos y flows deben ser genéricos (ej: "citas" no "cortes", "clientes" no "pacientes").
