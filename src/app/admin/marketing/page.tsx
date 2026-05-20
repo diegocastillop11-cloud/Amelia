@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect }     from 'next/navigation'
-import MarketingClient  from './MarketingClient'
+import MarketingClient  from '@/app/dashboard/marketing/MarketingClient'
 
 interface Props {
   searchParams: { tab?: string; meta?: string }
 }
 
-export default async function MarketingPage({ searchParams }: Props) {
+export default async function AdminMarketingPage({ searchParams }: Props) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -25,8 +25,8 @@ export default async function MarketingPage({ searchParams }: Props) {
 
   return (
     <MarketingClient
-      businessName={biz?.name ?? 'Mi negocio'}
-      businessCategory={biz?.category ?? 'negocio'}
+      businessName={biz?.name ?? 'Amelia'}
+      businessCategory={biz?.category ?? 'SaaS'}
       metaConnected={!!metaConn}
       metaAdAccountId={metaConn?.ad_account_id ?? null}
       metaPageId={metaConn?.page_id ?? null}

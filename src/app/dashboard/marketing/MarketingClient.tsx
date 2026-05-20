@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import MetaAdsClient from '@/components/marketing/MetaAdsClient'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -23,7 +24,7 @@ const QUICK_ACTIONS = [
     prompt: 'Reescribe la descripción del negocio para que sea más atractiva y persuasiva. Debe destacar el valor diferencial y motivar a los clientes a agendar o comprar.' },
 ]
 
-// ── Markdown renderer limpio ────────────────────────────────────────────────
+// ── Markdown renderer ──────────────────────────────────────────────────────────
 function formatInline(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -66,9 +67,6 @@ function renderMarkdown(text: string): string {
       const rest = trim.replace(/^\d+\.\s*/, '')
       if (listType !== 'ol') { closeList(); html += '<ol style="list-style:none;margin:0.5rem 0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:item">'; listType = 'ol' }
       html += `<li style="display:flex;gap:10px;align-items:flex-start"><span style="background:var(--accent);color:white;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:2px;flex-shrink:0">${num}</span><span>${formatInline(rest)}</span></li>`
-    } else if (trim.startsWith('✅') || trim.startsWith('☑') || trim.startsWith('✓')) {
-      if (listType !== 'ul') { closeList(); html += '<ul style="list-style:none;margin:0.5rem 0;padding:0;display:flex;flex-direction:column;gap:6px">'; listType = 'ul' }
-      html += `<li style="display:flex;gap:8px;align-items:flex-start"><span style="color:#10b981;flex-shrink:0">${trim[0]}</span><span>${formatInline(trim.slice(1).trim())}</span></li>`
     } else {
       closeList()
       html += `<p style="margin:0.25rem 0;line-height:1.7;color:var(--text-secondary)">${formatInline(trim)}</p>`
@@ -78,16 +76,12 @@ function renderMarkdown(text: string): string {
   return html
 }
 
-// ── PDF ──────────────────────────────────────────────────────────────────────
+// ── PDF ────────────────────────────────────────────────────────────────────────
 function renderForPrint(text: string): string {
   const lines = text.split('\n')
   let html = ''
   let listType: 'ul' | 'ol' | null = null
-
-  const closeList = () => {
-    if (listType) { html += listType === 'ul' ? '</ul>' : '</ol>'; listType = null }
-  }
-
+  const closeList = () => { if (listType) { html += listType === 'ul' ? '</ul>' : '</ol>'; listType = null } }
   for (const line of lines) {
     const trim = line.trim()
     if (!trim) { closeList(); html += '<br/>'; continue }
@@ -117,68 +111,57 @@ function downloadPdf(content: string, businessName: string, action?: string) {
   const win = window.open('', '_blank')
   if (!win) return
   win.document.write(`<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <title>${businessName} — ${title}</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { font-family: Arial, Helvetica, sans-serif; max-width: 720px; margin: 40px auto;
-           color: #111; line-height: 1.7; font-size: 14px; }
-    h1 { font-size: 22px; margin: 0 0 4px; }
-    h2 { font-size: 17px; margin: 24px 0 8px; border-top: 2px solid #e5e7eb; padding-top: 16px; }
-    h3 { font-size: 15px; margin: 18px 0 6px; color: #374151; }
-    p  { margin: 6px 0; color: #374151; }
-    ul, ol { padding-left: 1.5rem; margin: 8px 0; }
-    li { margin: 5px 0; }
-    hr { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
-    strong { color: #111; }
-    code { background: #f3f4f6; padding: 2px 5px; border-radius: 3px; font-size: 13px; }
-    .header { border-bottom: 2px solid #111; padding-bottom: 12px; margin-bottom: 24px; }
-    .header h1 { color: #111; }
-    .meta { font-size: 12px; color: #6b7280; margin-top: 4px; }
-    @media print {
-      body { margin: 20px; }
-      @page { margin: 1.5cm; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>${businessName}</h1>
-    <p class="meta">${title} · Generado por Amelia · ${new Date().toLocaleDateString('es-CL', { day:'numeric', month:'long', year:'numeric' })}</p>
-  </div>
-  ${renderForPrint(content)}
-  <script>setTimeout(()=>{window.print();},300);<\/script>
-</body>
-</html>`)
+<html lang="es"><head><meta charset="utf-8"><title>${businessName} — ${title}</title>
+<style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;max-width:720px;margin:40px auto;color:#111;line-height:1.7;font-size:14px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:24px 0 8px;border-top:2px solid #e5e7eb;padding-top:16px}
+h3{font-size:15px;margin:18px 0 6px;color:#374151}p{margin:6px 0;color:#374151}ul,ol{padding-left:1.5rem;margin:8px 0}
+li{margin:5px 0}hr{border:none;border-top:1px solid #e5e7eb;margin:16px 0}strong{color:#111}
+code{background:#f3f4f6;padding:2px 5px;border-radius:3px;font-size:13px}
+.header{border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:24px}.meta{font-size:12px;color:#6b7280;margin-top:4px}
+@media print{body{margin:20px}@page{margin:1.5cm}}</style></head>
+<body><div class="header"><h1>${businessName}</h1>
+<p class="meta">${title} · Generado por Amelia · ${new Date().toLocaleDateString('es-CL', { day:'numeric', month:'long', year:'numeric' })}</p></div>
+${renderForPrint(content)}<script>setTimeout(()=>{window.print();},300);<\/script></body></html>`)
   win.document.close()
 }
 
-// ── Componente ────────────────────────────────────────────────────────────────
-interface Props { businessName: string; businessCategory: string }
+// ── Props ──────────────────────────────────────────────────────────────────────
+interface Props {
+  businessName:       string
+  businessCategory:   string
+  metaConnected:      boolean
+  metaAdAccountId:    string | null
+  metaPageId:         string | null
+  metaCurrency:       string
+  initialTab:         'agente' | 'meta'
+  metaParam:          string | null
+}
 
-export default function MarketingClient({ businessName, businessCategory }: Props) {
-  const [messages,   setMessages]   = useState<Message[]>([])
-  const [input,      setInput]      = useState('')
-  const [loading,    setLoading]    = useState(false)
-  const [streaming,  setStreaming]  = useState(false)
-  const [copied,     setCopied]     = useState<number | null>(null)
+type Tab = 'agente' | 'meta'
+
+// ── Componente ─────────────────────────────────────────────────────────────────
+export default function MarketingClient({
+  businessName, businessCategory,
+  metaConnected, metaAdAccountId, metaPageId, metaCurrency,
+  initialTab, metaParam,
+}: Props) {
+  const [tab,       setTab]       = useState<Tab>(initialTab)
+  const [messages,  setMessages]  = useState<Message[]>([])
+  const [input,     setInput]     = useState('')
+  const [loading,   setLoading]   = useState(false)
+  const [streaming, setStreaming] = useState(false)
+  const [copied,    setCopied]    = useState<number | null>(null)
   const scrollRef    = useRef<HTMLDivElement>(null)
   const userScrolled = useRef(false)
 
-  // Detectar si el usuario scrolleó hacia arriba manualmente
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
-    const onScroll = () => {
-      userScrolled.current = el.scrollHeight - el.scrollTop - el.clientHeight > 80
-    }
+    const onScroll = () => { userScrolled.current = el.scrollHeight - el.scrollTop - el.clientHeight > 80 }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Auto-scroll solo si el usuario no ha scrolleado arriba
   useEffect(() => {
     const el = scrollRef.current
     if (!el || userScrolled.current) return
@@ -187,22 +170,19 @@ export default function MarketingClient({ businessName, businessCategory }: Prop
 
   const send = async (text: string, action?: string) => {
     if (!text.trim() || loading) return
-    // Al enviar: reset scroll y bajar al fondo siempre
     userScrolled.current = false
     setMessages(prev => [...prev, { role: 'user', content: text, action }, { role: 'assistant', content: '' }])
     setInput('')
     setLoading(true)
     setStreaming(true)
-    setTimeout(() => {
-      if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }, 30)
+    setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight }, 30)
     try {
       const res = await fetch('/api/ai/marketing', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, action }),
       })
       if (!res.ok || !res.body) throw new Error('Error')
-      const reader = res.body.getReader()
+      const reader  = res.body.getReader()
       const decoder = new TextDecoder()
       let full = ''
       while (true) {
@@ -224,147 +204,178 @@ export default function MarketingClient({ businessName, businessCategory }: Prop
   }
 
   return (
-    <div style={{ height:'100vh', display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--bg-base)' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-base)' }}>
 
-      {/* Header */}
-      <div style={{ padding:'1.25rem 1.75rem', borderBottom:'1px solid var(--border)',
-                     background:'var(--bg-surface)', flexShrink:0 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          <div style={{ width:38, height:38, borderRadius:10,
-                         background:'linear-gradient(135deg, #10b981, #059669)',
-                         display:'flex', alignItems:'center', justifyContent:'center',
-                         fontSize:'1.125rem', flexShrink:0 }}>📣</div>
+      {/* Header + tabs */}
+      <div style={{ padding: '1.25rem 1.75rem 0', borderBottom: '1px solid var(--border)',
+                     background: 'var(--bg-surface)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10,
+                         background: 'linear-gradient(135deg, #10b981, #059669)',
+                         display: 'flex', alignItems: 'center', justifyContent: 'center',
+                         fontSize: '1.125rem', flexShrink: 0 }}>📣</div>
           <div>
-            <p style={{ margin:0, fontWeight:800, fontSize:'1rem', color:'var(--text-primary)' }}>Agente de Marketing</p>
-            <p style={{ margin:0, fontSize:12, color:'var(--text-muted)' }}>{businessName} · {businessCategory}</p>
+            <p style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>Marketing con IA</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>{businessName} · {businessCategory}</p>
           </div>
         </div>
-      </div>
 
-      {/* Acciones rápidas */}
-      <div style={{ padding:'0.875rem 1.75rem', borderBottom:'1px solid var(--border)',
-                     background:'var(--bg-surface)', flexShrink:0 }}>
-        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-          {QUICK_ACTIONS.map(a => (
-            <button key={a.id} onClick={() => send(a.prompt, a.label)} disabled={loading}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 13px', borderRadius:20,
-                        border:`1.5px solid ${a.color}35`, background:`${a.color}12`,
-                        color:a.color, fontSize:12, fontWeight:600,
-                        cursor:loading?'not-allowed':'pointer', opacity:loading?0.5:1,
-                        fontFamily:'inherit', transition:'all 0.15s', whiteSpace:'nowrap' }}
-              onMouseOver={e=>{ if(!loading) e.currentTarget.style.background=`${a.color}22` }}
-              onMouseOut={e=>{ e.currentTarget.style.background=`${a.color}12` }}>
-              {a.icon} {a.label}
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 4 }}>
+          {([
+            { key: 'agente', icon: '🤖', label: 'Agente' },
+            { key: 'meta',   icon: '📢', label: 'Meta Ads', badge: metaConnected ? '●' : undefined },
+          ] as { key: Tab; icon: string; label: string; badge?: string }[]).map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
+                        background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                        fontSize: '0.875rem', fontWeight: tab === t.key ? 700 : 400,
+                        color: tab === t.key ? 'var(--accent-light)' : 'var(--text-muted)',
+                        borderBottom: tab === t.key ? '2px solid var(--accent)' : '2px solid transparent',
+                        marginBottom: -1, transition: 'all 0.15s' }}>
+              {t.icon} {t.label}
+              {t.badge && (
+                <span style={{ fontSize: 10, color: '#10b981' }}>{t.badge}</span>
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Mensajes */}
-      <div ref={scrollRef} style={{ flex:1, overflowY:'auto', padding:'1.5rem 1.75rem',
-                                     display:'flex', flexDirection:'column', gap:20,
-                                     scrollbarWidth:'thin', scrollbarColor:'rgba(255,255,255,0.1) transparent' }}>
-
-        {messages.length === 0 && (
-          <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center',
-                         justifyContent:'center', textAlign:'center', padding:'3rem 0', color:'var(--text-muted)' }}>
-            <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>📣</div>
-            <p style={{ margin:'0 0 0.5rem', fontWeight:700, fontSize:'1.125rem', color:'var(--text-secondary)' }}>
-              Tu agente de marketing está listo
-            </p>
-            <p style={{ margin:0, fontSize:'0.9375rem', maxWidth:380, lineHeight:1.6 }}>
-              Usa las acciones rápidas o escribe lo que necesitas — posts, planes, ideas de campaña, mensajes para clientes.
-            </p>
-          </div>
-        )}
-
-        {messages.map((msg, idx) => (
-          <div key={idx} style={{ display:'flex', flexDirection:'column',
-                                   alignItems:msg.role==='user'?'flex-end':'flex-start', gap:6 }}>
-            {msg.role==='user' && msg.action && (
-              <span style={{ fontSize:11, color:'var(--text-muted)', marginRight:4 }}>⚡ {msg.action}</span>
-            )}
-
-            <div style={{
-              maxWidth:'92%',
-              padding: msg.role==='user' ? '10px 14px' : '16px 18px',
-              borderRadius: msg.role==='user' ? '16px 16px 4px 16px' : '4px 16px 16px 16px',
-              background: msg.role==='user' ? 'linear-gradient(135deg,#10b981,#059669)' : 'var(--bg-elevated)',
-              border: msg.role==='assistant' ? '1px solid var(--border)' : 'none',
-              fontSize:'0.9rem', lineHeight:1.7,
-            }}>
-              {msg.role==='assistant' && msg.content==='' ? (
-                <span style={{ display:'flex', gap:4, alignItems:'center', color:'var(--text-muted)' }}>
-                  <span style={{ animation:'pulse 1s infinite' }}>●</span>
-                  <span style={{ animation:'pulse 1s 0.2s infinite' }}>●</span>
-                  <span style={{ animation:'pulse 1s 0.4s infinite' }}>●</span>
-                </span>
-              ) : msg.role==='assistant' && streaming && idx === messages.length - 1 ? (
-                // Durante streaming: texto crudo con cursor parpadeante
-                <p style={{ margin:0, whiteSpace:'pre-wrap', lineHeight:1.75,
-                              color:'var(--text-secondary)', fontFamily:'inherit' }}>
-                  {msg.content}
-                  <span style={{ display:'inline-block', width:2, height:'1em', background:'var(--accent)',
-                                   marginLeft:2, verticalAlign:'text-bottom', animation:'blink 1s step-end infinite' }} />
-                </p>
-              ) : msg.role==='assistant' ? (
-                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
-              ) : (
-                <p style={{ margin:0, color:'white', fontWeight:500 }}>{msg.content}</p>
-              )}
+      {/* Contenido según tab */}
+      {tab === 'meta' ? (
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          <MetaAdsClient
+            initialConnected={metaConnected}
+            initialAdAccountId={metaAdAccountId}
+            initialPageId={metaPageId}
+            initialCurrency={metaCurrency}
+            metaParam={metaParam}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Acciones rápidas */}
+          <div style={{ padding: '0.875rem 1.75rem', borderBottom: '1px solid var(--border)',
+                         background: 'var(--bg-surface)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {QUICK_ACTIONS.map(a => (
+                <button key={a.id} onClick={() => send(a.prompt, a.label)} disabled={loading}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 13px', borderRadius: 20,
+                            border: `1.5px solid ${a.color}35`, background: `${a.color}12`,
+                            color: a.color, fontSize: 12, fontWeight: 600,
+                            cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1,
+                            fontFamily: 'inherit', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
+                  onMouseOver={e => { if (!loading) e.currentTarget.style.background = `${a.color}22` }}
+                  onMouseOut={e  => { e.currentTarget.style.background = `${a.color}12` }}>
+                  {a.icon} {a.label}
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* Acciones de respuesta */}
-            {msg.role==='assistant' && msg.content && (
-              <div style={{ display:'flex', gap:8, marginLeft:4 }}>
-                <button onClick={() => copy(msg.content, idx)}
-                  style={{ fontSize:11, color:copied===idx?'#10b981':'var(--text-muted)',
-                            background:'none', border:'none', cursor:'pointer',
-                            fontFamily:'inherit', display:'flex', alignItems:'center', gap:4, padding:'2px 4px' }}>
-                  {copied===idx ? '✓ Copiado' : '⎘ Copiar'}
-                </button>
-                <button onClick={() => downloadPdf(msg.content, businessName, msg.action ?? messages[idx-1]?.action)}
-                  style={{ fontSize:11, color:'var(--text-muted)', background:'none', border:'none',
-                            cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:4, padding:'2px 4px' }}>
-                  ↓ Descargar PDF
-                </button>
+          {/* Mensajes */}
+          <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.75rem',
+                                         display: 'flex', flexDirection: 'column', gap: 20,
+                                         scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+            {messages.length === 0 && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                             justifyContent: 'center', textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📣</div>
+                <p style={{ margin: '0 0 0.5rem', fontWeight: 700, fontSize: '1.125rem', color: 'var(--text-secondary)' }}>
+                  Tu agente de marketing está listo
+                </p>
+                <p style={{ margin: 0, fontSize: '0.9375rem', maxWidth: 380, lineHeight: 1.6 }}>
+                  Usa las acciones rápidas o escribe lo que necesitas — posts, planes, ideas de campaña, mensajes para clientes.
+                </p>
               </div>
             )}
-          </div>
-        ))}
-      </div>
 
-      {/* Input */}
-      <div style={{ padding:'1rem 1.75rem', borderTop:'1px solid var(--border)',
-                     background:'var(--bg-surface)', flexShrink:0 }}>
-        <div style={{ display:'flex', gap:10, alignItems:'flex-end' }}>
-          <textarea value={input} onChange={e=>setInput(e.target.value)}
-            onKeyDown={e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(input) } }}
-            placeholder="Pide lo que necesitas — post, campaña, análisis... (Enter para enviar)"
-            rows={1}
-            style={{ flex:1, resize:'none', background:'var(--bg-elevated)',
-                      border:'1.5px solid var(--border)', color:'var(--text-primary)',
-                      borderRadius:12, padding:'10px 14px', fontSize:'0.875rem',
-                      fontFamily:'inherit', outline:'none', lineHeight:1.5,
-                      maxHeight:120, overflowY:'auto', scrollbarWidth:'thin' }}
-            onFocus={e=>{ e.target.style.borderColor='#10b981'; e.target.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)' }}
-            onBlur={e=>{ e.target.style.borderColor='var(--border)'; e.target.style.boxShadow='none' }}
-            onInput={e=>{ const t=e.currentTarget; t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,120)+'px' }}
-          />
-          <button onClick={()=>send(input)} disabled={loading||!input.trim()}
-            style={{ width:40, height:40, borderRadius:10, border:'none', flexShrink:0,
-                      background:loading||!input.trim()?'rgba(255,255,255,0.07)':'linear-gradient(135deg,#10b981,#059669)',
-                      color:loading||!input.trim()?'var(--text-muted)':'white',
-                      cursor:loading||!input.trim()?'not-allowed':'pointer',
-                      fontSize:'1.125rem', display:'flex', alignItems:'center', justifyContent:'center',
-                      transition:'all 0.15s' }}>
-            {loading ? '⏳' : '↑'}
-          </button>
-        </div>
-        <p style={{ margin:'6px 0 0', fontSize:11, color:'var(--text-muted)', textAlign:'center' }}>
-          El agente conoce tu negocio, clientes y servicios en tiempo real
-        </p>
-      </div>
+            {messages.map((msg, idx) => (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column',
+                                       alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: 6 }}>
+                {msg.role === 'user' && msg.action && (
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginRight: 4 }}>⚡ {msg.action}</span>
+                )}
+                <div style={{
+                  maxWidth: '92%',
+                  padding: msg.role === 'user' ? '10px 14px' : '16px 18px',
+                  borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '4px 16px 16px 16px',
+                  background: msg.role === 'user' ? 'linear-gradient(135deg,#10b981,#059669)' : 'var(--bg-elevated)',
+                  border: msg.role === 'assistant' ? '1px solid var(--border)' : 'none',
+                  fontSize: '0.9rem', lineHeight: 1.7,
+                }}>
+                  {msg.role === 'assistant' && msg.content === '' ? (
+                    <span style={{ display: 'flex', gap: 4, alignItems: 'center', color: 'var(--text-muted)' }}>
+                      <span style={{ animation: 'pulse 1s infinite' }}>●</span>
+                      <span style={{ animation: 'pulse 1s 0.2s infinite' }}>●</span>
+                      <span style={{ animation: 'pulse 1s 0.4s infinite' }}>●</span>
+                    </span>
+                  ) : msg.role === 'assistant' && streaming && idx === messages.length - 1 ? (
+                    <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: 1.75,
+                                  color: 'var(--text-secondary)', fontFamily: 'inherit' }}>
+                      {msg.content}
+                      <span style={{ display: 'inline-block', width: 2, height: '1em', background: 'var(--accent)',
+                                       marginLeft: 2, verticalAlign: 'text-bottom', animation: 'blink 1s step-end infinite' }} />
+                    </p>
+                  ) : msg.role === 'assistant' ? (
+                    <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
+                  ) : (
+                    <p style={{ margin: 0, color: 'white', fontWeight: 500 }}>{msg.content}</p>
+                  )}
+                </div>
+                {msg.role === 'assistant' && msg.content && (
+                  <div style={{ display: 'flex', gap: 8, marginLeft: 4 }}>
+                    <button onClick={() => copy(msg.content, idx)}
+                      style={{ fontSize: 11, color: copied === idx ? '#10b981' : 'var(--text-muted)',
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4, padding: '2px 4px' }}>
+                      {copied === idx ? '✓ Copiado' : '⎘ Copiar'}
+                    </button>
+                    <button onClick={() => downloadPdf(msg.content, businessName, msg.action ?? messages[idx - 1]?.action)}
+                      style={{ fontSize: 11, color: 'var(--text-muted)', background: 'none', border: 'none',
+                                cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4, padding: '2px 4px' }}>
+                      ↓ Descargar PDF
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Input */}
+          <div style={{ padding: '1rem 1.75rem', borderTop: '1px solid var(--border)',
+                         background: 'var(--bg-surface)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+              <textarea value={input} onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input) } }}
+                placeholder="Pide lo que necesitas — post, campaña, análisis... (Enter para enviar)"
+                rows={1}
+                style={{ flex: 1, resize: 'none', background: 'var(--bg-elevated)',
+                          border: '1.5px solid var(--border)', color: 'var(--text-primary)',
+                          borderRadius: 12, padding: '10px 14px', fontSize: '0.875rem',
+                          fontFamily: 'inherit', outline: 'none', lineHeight: 1.5,
+                          maxHeight: 120, overflowY: 'auto', scrollbarWidth: 'thin' }}
+                onFocus={e  => { e.target.style.borderColor = '#10b981'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)' }}
+                onBlur={e   => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none' }}
+                onInput={e  => { const t = e.currentTarget; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 120) + 'px' }}
+              />
+              <button onClick={() => send(input)} disabled={loading || !input.trim()}
+                style={{ width: 40, height: 40, borderRadius: 10, border: 'none', flexShrink: 0,
+                          background: loading || !input.trim() ? 'rgba(255,255,255,0.07)' : 'linear-gradient(135deg,#10b981,#059669)',
+                          color: loading || !input.trim() ? 'var(--text-muted)' : 'white',
+                          cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
+                          fontSize: '1.125rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.15s' }}>
+                {loading ? '⏳' : '↑'}
+              </button>
+            </div>
+            <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>
+              El agente conoce tu negocio, clientes y servicios en tiempo real
+            </p>
+          </div>
+        </>
+      )}
 
       <style>{`
         @keyframes pulse{0%,100%{opacity:0.3}50%{opacity:1}}

@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head>
         {/* Aplica el tema guardado antes del primer render para evitar flash */}
         <script dangerouslySetInnerHTML={{ __html: `
