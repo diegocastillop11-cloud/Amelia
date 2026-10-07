@@ -191,6 +191,7 @@ export default function SiteEditorClient({
   const coverRef  = useRef<HTMLInputElement>(null)
   const galleryRef= useRef<HTMLInputElement>(null)
   const font = findFont(fontId)
+  const [srcDoc, setSrcDoc] = useState('')
   const fontIdRef = useRef(fontId)
   const sectionsRef = useRef(sections)
   useEffect(()=>{ sectionsRef.current = sections },[sections])
@@ -208,6 +209,24 @@ export default function SiteEditorClient({
   useEffect(()=>{ colorHRef.current  = colorH  },[colorH])
   useEffect(()=>{ colorTRef.current  = colorT  },[colorT])
   useEffect(()=>{ colorBgRef.current = colorBg },[colorBg])
+
+  useEffect(()=>{
+    if(mode!=='preview') return
+    let off=false
+    const tm=setTimeout(async()=>{
+      const { renderToStaticMarkup } = await import('react-dom/server')
+      const html = renderToStaticMarkup(
+        <SiteRenderer
+          content={{...content,theme:{...(content.theme??{}),headingColor:colorH||undefined,textColor:colorT||undefined,bgColor:colorBg||undefined,fontId,hiddenSections:Object.entries(sections).filter(([,v])=>!v).map(([k])=>k)}}}
+          color={color} template={template} name={name} logo={logo} cover={cover}
+          gallery={gallery} fontFamily={font.family} slug={businessSlug} products={products}
+        />
+      )
+      const css = Array.from(document.styleSheets).map(sh=>{try{return Array.from(sh.cssRules).map(r=>r.cssText).join(' ')}catch{return ''}}).join(' ')
+      if(!off) setSrcDoc(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="${fontUrl(fontId)}"><style>${css}</style></head><body>${html}</body></html>`)
+    },200)
+    return ()=>{off=true;clearTimeout(tm)}
+  },[mode,content,colorH,colorT,colorBg,fontId,sections,color,template,name,logo,cover,gallery,font.family,businessSlug,products])
 
   const save = useCallback(async (c:SiteContent,n:string,col:string,tpl:TemplateId) => {
     setSaveState('saving')
@@ -728,18 +747,15 @@ export default function SiteEditorClient({
         {/* PREVIEW */}
         <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:'#1a1a2e'}} onClick={()=>fontOpen&&setFontOpen(false)}>
           <div style={{padding:'6px 16px',background:'rgba(99,102,241,0.08)',borderBottom:'1px solid rgba(99,102,241,0.15)',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            <span style={{fontSize:11,color:'rgba(165,180,252,0.7)'}}>{mode==='preview'?'👁 Así se verá tu sitio publicado, con tus cambios actuales (aunque no los hayas guardado)':'✏ Haz clic en cualquier texto para editarlo directamente'}</span>
+            <span style={{fontSize:11,color:'rgba(165,180,252,0.7)'}}>{mode==='preview'?'👁 Vista previa real · Así se verá tu sitio publicado, incluyendo los cambios que aún no has guardado':'✏ Modo edición · Haz clic en un texto para editarlo. El diseño final puede variar: usa «Vista previa real» para ver tu sitio tal como se publicará'}</span>
           </div>
           <div style={{flex:1,overflowY:'auto',padding:20,display:'flex',justifyContent:'center',alignItems:'flex-start'}}>
-            <div style={{width:viewport==='movil'?390:'100%',maxWidth:viewport==='movil'?390:960,borderRadius:12,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.6)',transition:'width 0.3s',fontFamily:font.family}}>
+            <div style={{width:viewport==='movil'?390:'100%',maxWidth:viewport==='movil'?390:(mode==='preview'?1280:960),borderRadius:12,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.6)',transition:'width 0.3s',fontFamily:font.family}}>
 
               {/* SITIO */}
               {mode==='preview'&&(
-                <SiteRenderer
-                  content={{...content,theme:{...(content.theme??{}),headingColor:colorH||undefined,textColor:colorT||undefined,bgColor:colorBg||undefined,fontId,hiddenSections:Object.entries(sections).filter(([,v])=>!v).map(([k])=>k)}}}
-                  color={color} template={template} name={name} logo={logo} cover={cover}
-                  gallery={gallery} fontFamily={font.family} slug={businessSlug} products={products} staticPreview
-                />
+                <iframe title="Vista previa real" srcDoc={srcDoc} sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                  style={{width:'100%',height:'calc(100vh - 118px)',border:'none',display:'block',background:'#fff'}}/>
               )}
               <div style={{background:pageBg,minHeight:'100vh',color:navFg,display:mode==='preview'?'none':'block'}}>
 

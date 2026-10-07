@@ -56,7 +56,8 @@ export function getTheme(tpl: TemplateId, color: string, hasCover: boolean) {
   const retro   = tpl === 'retro'
   // neon/cosmic heredan comportamiento dark; glass3d hereda glass
   const dark  = tpl === 'dark' || neon || cosmic
-  const vib   = tpl === 'vibrante' || tpl === 'sunset'
+  const sunset = tpl === 'sunset'
+  const vib   = tpl === 'vibrante' || sunset
   const eleg  = tpl === 'elegante'
   const mini  = tpl === 'minimalista'
   const bold  = tpl === 'bold'
@@ -64,12 +65,13 @@ export function getTheme(tpl: TemplateId, color: string, hasCover: boolean) {
   const over  = hasCover || dark || vib || glass
   return {
     dark, neon, cosmic, glass3d, retro,
-    vib, eleg, mini, bold, glass, over,
+    vib, sunset, eleg, mini, bold, glass, over,
     pageBg: neon    ? '#05000f'
            : cosmic ? '#03030e'
            : glass3d ? 'linear-gradient(135deg, #0b0f1a 0%, #130d2e 100%)'
            : retro  ? '#fffef5'
            : dark   ? '#0a0a0f'
+           : sunset ? `linear-gradient(160deg, ${color} 0%, #e11d48 60%, #7c3aed 100%)`
            : vib    ? `linear-gradient(160deg, ${color}ee, ${color}99)`
            : glass  ? `linear-gradient(135deg, #0f172a, #1e1b4b)`
            : bold   ? '#111827'
@@ -235,6 +237,7 @@ export function SiteRenderer({
     : t.cosmic  ? `radial-gradient(ellipse at 30% 20%, ${color}55, transparent 55%), radial-gradient(ellipse at 75% 75%, rgba(139,92,246,0.45), transparent 55%), radial-gradient(ellipse at 55% 55%, rgba(56,189,248,0.2), transparent 50%), #03030e`
     : t.glass3d ? `radial-gradient(ellipse at 20% 30%, ${color}50, transparent 55%), radial-gradient(ellipse at 80% 70%, rgba(99,102,241,0.35), transparent 55%), linear-gradient(135deg, #0b0f1a, #130d2e)`
     : t.retro   ? color
+    : t.sunset  ? `linear-gradient(135deg, ${color} 0%, #e11d48 70%)`
     : t.dark    ? `radial-gradient(ellipse at 50% 0%, ${color}35, transparent 70%)`
     : t.glass   ? `radial-gradient(ellipse at 30% 20%, ${color}40, transparent 60%), radial-gradient(ellipse at 70% 80%, ${color}20, transparent 60%)`
     : t.bold    ? `linear-gradient(135deg, #111827 0%, #1f2937 100%)`
