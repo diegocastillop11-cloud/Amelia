@@ -68,15 +68,20 @@ export default function MetaAdsClient({ initialConnected, initialAdAccountId, in
   const [budget,      setBudget]      = useState('10')
   const [ageMin,      setAgeMin]      = useState('18')
   const [ageMax,      setAgeMax]      = useState('55')
-  const [creating,    setCreating]    = useState(false)
-  const [steps,       setSteps]       = useState<ProgressStep[]>(STEP_INIT)
-  const [previewImg,  setPreviewImg]  = useState<string | null>(null)
-  const [modalError,  setModalError]  = useState<string | null>(null)
-  const [checkpoint,  setCheckpoint]  = useState<{
+  const [creating,      setCreating]      = useState(false)
+  const [steps,         setSteps]         = useState<ProgressStep[]>(STEP_INIT)
+  const [previewImg,    setPreviewImg]    = useState<string | null>(null)
+  const [modalError,    setModalError]    = useState<string | null>(null)
+  const [checkpoint,    setCheckpoint]    = useState<{
     copy?:      Record<string, string>
     imageUrl?:  string
     imageHash?: string
   }>({})
+  const [imageMode,     setImageMode]     = useState<'ai' | 'manual'>('ai')
+  const [manualFile,    setManualFile]    = useState<File | null>(null)
+  const [manualPreview, setManualPreview] = useState<string | null>(null)
+  const [manualHash,    setManualHash]    = useState<string | null>(null)
+  const [uploadingImg,  setUploadingImg]  = useState(false)
 
   const isZeroDecimal = ZERO_DECIMAL.includes(currency.toUpperCase())
   const defaultBudget = isZeroDecimal ? '5000' : '10'
@@ -182,6 +187,7 @@ export default function MetaAdsClient({ initialConnected, initialAdAccountId, in
     savedCopy?: Record<string, string>,
     savedImageHash?: string,
     savedImageUrl?: string,
+    manualImageHash?: string,
   ) => {
     const abort = new AbortController()
     abortRef.current = abort
@@ -193,9 +199,10 @@ export default function MetaAdsClient({ initialConnected, initialAdAccountId, in
         body: JSON.stringify({
           objective, daily_budget: Number(budget),
           age_min: Number(ageMin), age_max: Number(ageMax),
-          saved_copy:       savedCopy       ?? undefined,
-          saved_image_hash: savedImageHash  ?? undefined,
-          saved_image_url:  savedImageUrl   ?? undefined,
+          saved_copy:        savedCopy        ?? undefined,
+          saved_image_hash:  savedImageHash   ?? undefined,
+          saved_image_url:   savedImageUrl    ?? undefined,
+          manual_image_hash: manualImageHash  ?? undefined,
         }),
         signal: abort.signal,
       })
@@ -263,11 +270,11 @@ export default function MetaAdsClient({ initialConnected, initialAdAccountId, in
 
   const createFullCampaign = () => {
     setCreating(true)
-    setPreviewImg(null)
+    setPreviewImg(manualPreview)
     setModalError(null)
     setCheckpoint({})
     setSteps(STEP_INIT.map(s => ({ ...s, active: s.key === 'copy' })))
-    runCampaign()
+    runCampaign(undefined, undefined, undefined, manualHash ?? undefined)
   }
 
   const deleteCampaign = async (id: string, name: string) => {
@@ -302,6 +309,26 @@ export default function MetaAdsClient({ initialConnected, initialAdAccountId, in
     notify('Meta Ads desconectado')
   }
 
+  const handleManualImage = async (file: File) => {
+    setManualFile(file)
+    setManualPreview(URL.createObjectURL(file))
+    setManualHash(null)
+    setUploadingImg(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/meta/upload-image', { method: 'POST', body: fd })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Error al subir imagen')
+      setManualHash(json.hash)
+    } catch (e) {
+      notify(String(e), 'error')
+      setManualFile(null)
+      setManualPreview(null)
+    }
+    setUploadingImg(false)
+  }
+
   const openModal = () => {
     setPreviewImg(null)
     setSteps(STEP_INIT)
@@ -311,6 +338,10 @@ export default function MetaAdsClient({ initialConnected, initialAdAccountId, in
     setBudget(defaultBudget)
     setAgeMin('18')
     setAgeMax('55')
+    setImageMode('ai')
+    setManualFile(null)
+    setManualPreview(null)
+    setManualHash(null)
     setShowModal(true)
   }
 
@@ -554,11 +585,61 @@ export default function MetaAdsClient({ initialConnected, initialAdAccountId, in
                   </label>
                 </div>
 
+                {/* Toggle imagen */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <span style={labelStyle}>Imagen del anuncio</span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {(['ai', 'manual'] as const).map(mode => (
+                      <button key={mode} type="button" onClick={() => { setImageMode(mode); setManualFile(null); setManualPreview(null); setManualHash(null) }}
+                        style={{ flex: 1, padding: '9px 12px', borderRadius: 10, cursor: 'pointer',
+                                  fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
+                                  border: `1.5px solid ${imageMode === mode ? '#1877f2' : 'var(--border)'}`,
+                                  background: imageMode === mode ? 'rgba(24,119,242,0.1)' : 'var(--bg-elevated)',
+                                  color: imageMode === mode ? '#60a5fa' : 'var(--text-muted)' }}>
+                        {mode === 'ai' ? '🤖 Generar con IA' : '📁 Subir imagen'}
+                      </button>
+                    ))}
+                  </div>
+
+                  {imageMode === 'manual' && (
+                    <div style={{ marginTop: 10 }}>
+                      <label style={{ display: 'block', cursor: 'pointer' }}>
+                        <div style={{ border: `2px dashed ${manualHash ? '#10b981' : 'var(--border)'}`,
+                                       borderRadius: 10, overflow: 'hidden',
+                                       background: 'var(--bg-elevated)', textAlign: 'center' }}>
+                          {manualPreview ? (
+                            <div style={{ position: 'relative' }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={manualPreview} alt="Preview" style={{ width: '100%', maxHeight: 160, objectFit: 'cover', display: 'block' }} />
+                              <div style={{ position: 'absolute', bottom: 6, right: 8, fontSize: 11, fontWeight: 700,
+                                             padding: '3px 8px', borderRadius: 20,
+                                             background: manualHash ? 'rgba(16,185,129,0.9)' : 'rgba(0,0,0,0.6)',
+                                             color: 'white' }}>
+                                {uploadingImg ? '⏳ Subiendo...' : manualHash ? '✓ Lista' : '❌ Error'}
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ padding: '20px 14px', color: 'var(--text-muted)', fontSize: 13 }}>
+                              <div style={{ fontSize: 28, marginBottom: 6 }}>🖼</div>
+                              Haz clic para seleccionar una imagen<br/>
+                              <span style={{ fontSize: 11 }}>JPG o PNG · Recomendado 1200×628px</span>
+                            </div>
+                          )}
+                        </div>
+                        <input type="file" accept="image/jpeg,image/png,image/jpg" style={{ display: 'none' }}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handleManualImage(f) }} />
+                      </label>
+                    </div>
+                  )}
+                </div>
+
                 <div style={{ background: 'rgba(24,119,242,0.08)', border: '1px solid rgba(24,119,242,0.2)',
                                borderRadius: 10, padding: '10px 14px', marginBottom: '1.25rem', fontSize: 12,
                                color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                   <strong style={{ color: '#60a5fa' }}>¿Qué va a pasar?</strong><br/>
-                  Claude genera el copy · FLUX genera la imagen · Todo se sube a Meta Ads en pausa (~10 seg)
+                  {imageMode === 'ai'
+                    ? 'Claude genera el copy · IA genera la imagen · Todo se sube a Meta Ads en pausa'
+                    : 'Claude genera el copy · Se usa tu imagen · Todo se sube a Meta Ads en pausa'}
                 </div>
 
                 <div style={{ display: 'flex', gap: 10 }}>
@@ -570,11 +651,18 @@ export default function MetaAdsClient({ initialConnected, initialAdAccountId, in
                     Cancelar
                   </button>
                   <button onClick={createFullCampaign}
-                    style={{ flex: 2, padding: '10px', background: 'linear-gradient(135deg,#1877f2,#0a5cc7)',
-                              color: 'white', border: 'none', borderRadius: 10,
-                              fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.875rem',
-                              boxShadow: '0 4px 12px rgba(24,119,242,0.3)' }}>
-                    🚀 Crear campaña completa
+                    disabled={imageMode === 'manual' && (!manualHash || uploadingImg)}
+                    style={{ flex: 2, padding: '10px', border: 'none', borderRadius: 10,
+                              fontWeight: 700, fontFamily: 'inherit', fontSize: '0.875rem',
+                              background: (imageMode === 'manual' && (!manualHash || uploadingImg))
+                                ? 'rgba(255,255,255,0.07)' : 'linear-gradient(135deg,#1877f2,#0a5cc7)',
+                              color: (imageMode === 'manual' && (!manualHash || uploadingImg))
+                                ? 'var(--text-muted)' : 'white',
+                              cursor: (imageMode === 'manual' && (!manualHash || uploadingImg))
+                                ? 'not-allowed' : 'pointer',
+                              boxShadow: (imageMode === 'manual' && (!manualHash || uploadingImg))
+                                ? 'none' : '0 4px 12px rgba(24,119,242,0.3)' }}>
+                    {uploadingImg ? '⏳ Subiendo imagen...' : '🚀 Crear campaña completa'}
                   </button>
                 </div>
               </>

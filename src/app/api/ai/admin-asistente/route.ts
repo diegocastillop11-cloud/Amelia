@@ -96,7 +96,7 @@ export async function POST(req: Request) {
   // Lista de clientes con su plan
   const clientList = (businesses ?? []).slice(0, 20).map(b => {
     const lic = licMap.get(b.id)
-    const ownerData = b.owners as { full_name: string | null; email: string } | null
+    const ownerData = b.owners as unknown as { full_name: string | null; email: string } | null
     return `• ${b.name} (${b.category}) — Plan: ${lic?.plan ?? 'free'} — ${b.is_published ? 'Publicado' : 'Borrador'} — ${ownerData?.email ?? '—'}`
   })
 

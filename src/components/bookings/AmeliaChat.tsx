@@ -86,11 +86,11 @@ export default function AmeliaChat({
       // Auto-plantilla cuando Amelia pide los datos de contacto
       const askingForData = /nombre|teléfono|correo/i.test(data.text) && !data.bookingData
       if (askingForData) {
-        const tpl = 'Horario: \nNombre: \nTeléfono: \nCorreo: '
+        const tpl = 'Fecha: \nHorario: \nNombre: \nTeléfono: \nCorreo: '
         setInput(tpl)
         setTimeout(() => {
           const el = inputRef.current
-          if (el) { autoResize(el); el.focus(); el.setSelectionRange(9, 9) }
+          if (el) { autoResize(el); el.focus(); el.setSelectionRange(7, 7) }
         }, 80)
       }
 

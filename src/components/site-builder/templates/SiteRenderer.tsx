@@ -29,6 +29,7 @@ function logoImgStyle(shape: string, size: number): React.CSSProperties {
 export type TemplateId =
   | 'moderna' | 'clasica' | 'dark' | 'vibrante' | 'elegante' | 'minimalista'
   | 'bold' | 'sunset' | 'glass'
+  | 'neon' | 'glass3d' | 'cosmic' | 'retro'
 
 export interface Service {
   name: string; description: string; price: string; image?: string
@@ -48,34 +49,55 @@ export interface SiteRendererProps {
 }
 
 function getTheme(tpl: TemplateId, color: string, hasCover: boolean) {
-  const dark  = tpl === 'dark'
+  const neon    = tpl === 'neon'
+  const cosmic  = tpl === 'cosmic'
+  const glass3d = tpl === 'glass3d'
+  const retro   = tpl === 'retro'
+  // neon/cosmic heredan comportamiento dark; glass3d hereda glass
+  const dark  = tpl === 'dark' || neon || cosmic
   const vib   = tpl === 'vibrante' || tpl === 'sunset'
   const eleg  = tpl === 'elegante'
   const mini  = tpl === 'minimalista'
   const bold  = tpl === 'bold'
-  const glass = tpl === 'glass'
+  const glass = tpl === 'glass' || glass3d
   const over  = hasCover || dark || vib || glass
   return {
-    dark, vib, eleg, mini, bold, glass, over,
-    pageBg: dark   ? '#0a0a0f'
-           : vib   ? `linear-gradient(160deg, ${color}ee, ${color}99)`
-           : glass ? `linear-gradient(135deg, #0f172a, #1e1b4b)`
-           : bold  ? '#111827'
-           : eleg  ? '#faf9f7'
+    dark, neon, cosmic, glass3d, retro,
+    vib, eleg, mini, bold, glass, over,
+    pageBg: neon    ? '#05000f'
+           : cosmic ? '#03030e'
+           : glass3d ? 'linear-gradient(135deg, #0b0f1a 0%, #130d2e 100%)'
+           : retro  ? '#fffef5'
+           : dark   ? '#0a0a0f'
+           : vib    ? `linear-gradient(160deg, ${color}ee, ${color}99)`
+           : glass  ? `linear-gradient(135deg, #0f172a, #1e1b4b)`
+           : bold   ? '#111827'
+           : eleg   ? '#faf9f7'
            : '#fff',
-    fg:     (over || bold) ? 'white' : '#111827',
-    sectFg: (dark || vib || glass || bold) ? 'white' : '#111827',
+    fg:     (over || bold)  ? 'white' : retro ? '#1a1a0f' : '#111827',
+    sectFg: (dark || vib || glass || bold) ? 'white' : retro ? '#1a1a0f' : '#111827',
     muted:  dark   ? 'rgba(255,255,255,0.5)'
            : (vib || glass || bold) ? 'rgba(255,255,255,0.72)'
+           : retro  ? '#665e44'
            : '#6b7280',
-    border: (dark || glass || bold) ? 'rgba(255,255,255,0.1)' : '#f0f0f0',
-    sectBg: dark   ? 'rgba(255,255,255,0.02)'
-           : glass ? 'rgba(255,255,255,0.05)'
-           : bold  ? 'rgba(255,255,255,0.04)'
-           : vib   ? 'rgba(0,0,0,0.08)'
+    border: neon    ? `${color}55`
+           : retro  ? '#1a1a0f'
+           : (dark || glass || bold) ? 'rgba(255,255,255,0.1)' : '#f0f0f0',
+    sectBg: neon    ? 'rgba(255,255,255,0.02)'
+           : cosmic ? 'rgba(255,255,255,0.02)'
+           : glass3d ? 'rgba(255,255,255,0.03)'
+           : retro  ? '#fff9e6'
+           : dark   ? 'rgba(255,255,255,0.02)'
+           : glass  ? 'rgba(255,255,255,0.05)'
+           : bold   ? 'rgba(255,255,255,0.04)'
+           : vib    ? 'rgba(0,0,0,0.08)'
            : '#f9fafb',
-    navBg:  dark   ? 'rgba(0,0,0,0.65)'
-           : glass ? 'rgba(255,255,255,0.08)'
+    navBg:  neon    ? 'rgba(5,0,15,0.88)'
+           : cosmic ? 'rgba(3,3,14,0.88)'
+           : glass3d ? 'rgba(11,15,26,0.88)'
+           : retro  ? '#fffef5'
+           : dark   ? 'rgba(0,0,0,0.65)'
+           : glass  ? 'rgba(255,255,255,0.08)'
            : (vib || bold) ? 'rgba(0,0,0,0.15)'
            : 'white',
   }
@@ -196,13 +218,25 @@ export function SiteRenderer({
   const galFrame  = content.theme?.galleryFrame ?? 'rounded'
   const needsBg   = t.dark || t.vib || t.glass || t.bold
 
+  // Toggles de animaciones (default true — activo en sitios existentes)
+  const animAurora      = content.theme?.animAurora      ?? true
+  const animTypewriter  = content.theme?.animTypewriter  ?? true
+  const animBorderBeam  = content.theme?.animBorderBeam  ?? true
+  const animScrollReveal= content.theme?.animScrollReveal ?? true
+  const animTerminal    = content.theme?.animTerminal    ?? true
+  const animNumber      = content.theme?.animNumber      ?? true
+
   const heroBg = hasCover
     ? `linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45)), url(${cover}) center/cover no-repeat`
-    : t.dark  ? `radial-gradient(ellipse at 50% 0%, ${color}35, transparent 70%)`
-    : t.glass ? `radial-gradient(ellipse at 30% 20%, ${color}40, transparent 60%), radial-gradient(ellipse at 70% 80%, ${color}20, transparent 60%)`
-    : t.bold  ? `linear-gradient(135deg, #111827 0%, #1f2937 100%)`
-    : t.vib   ? `linear-gradient(135deg, ${color}, ${color}aa)`
-    : t.mini  ? 'white'
+    : t.neon    ? `radial-gradient(ellipse at 50% 0%, ${color}70, transparent 65%), radial-gradient(ellipse at 80% 80%, ${color}25, transparent 60%), #05000f`
+    : t.cosmic  ? `radial-gradient(ellipse at 30% 20%, ${color}55, transparent 55%), radial-gradient(ellipse at 75% 75%, rgba(139,92,246,0.45), transparent 55%), radial-gradient(ellipse at 55% 55%, rgba(56,189,248,0.2), transparent 50%), #03030e`
+    : t.glass3d ? `radial-gradient(ellipse at 20% 30%, ${color}50, transparent 55%), radial-gradient(ellipse at 80% 70%, rgba(99,102,241,0.35), transparent 55%), linear-gradient(135deg, #0b0f1a, #130d2e)`
+    : t.retro   ? color
+    : t.dark    ? `radial-gradient(ellipse at 50% 0%, ${color}35, transparent 70%)`
+    : t.glass   ? `radial-gradient(ellipse at 30% 20%, ${color}40, transparent 60%), radial-gradient(ellipse at 70% 80%, ${color}20, transparent 60%)`
+    : t.bold    ? `linear-gradient(135deg, #111827 0%, #1f2937 100%)`
+    : t.vib     ? `linear-gradient(135deg, ${color}, ${color}aa)`
+    : t.mini    ? 'white'
     : `linear-gradient(135deg, ${color}18, ${color}06)`
 
   const ctaBg = t.over ? 'white' : color
@@ -210,11 +244,139 @@ export function SiteRenderer({
   const openAmelia = `onclick="window.__ameliaOpen?.(null)"`
   const openSvc    = (s: string) => `onclick="window.__ameliaOpen?.('${s.replace(/'/g, "\\'")}')"`
 
+  // CSS base — siempre inyectado
+  const cssBase = `
+    @keyframes amelia-reveal-in{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+    .amelia-reveal{opacity:0;transform:translateY(28px)}
+    .amelia-reveal.visible{animation:amelia-reveal-in 0.65s cubic-bezier(0.22,1,0.36,1) forwards}
+    .amelia-card-3d{transition:transform 0.3s,box-shadow 0.3s}
+    .amelia-card-3d:hover{transform:translateY(-6px) perspective(700px) rotateX(2deg);box-shadow:0 20px 44px rgba(0,0,0,0.15)}
+    @keyframes amelia-aurora-a{0%,100%{transform:translate(0%,0%) scale(1)}33%{transform:translate(6%,-10%) scale(1.12)}66%{transform:translate(-6%,7%) scale(0.94)}}
+    @keyframes amelia-aurora-b{0%,100%{transform:translate(0%,0%) scale(1)}33%{transform:translate(-10%,6%) scale(1.08)}66%{transform:translate(8%,-6%) scale(1.14)}}
+    @keyframes amelia-aurora-c{0%,100%{transform:translate(0%,0%) scale(1.06)}50%{transform:translate(4%,10%) scale(0.92)}}
+    .amelia-aurora-a,.amelia-aurora-b,.amelia-aurora-c{position:absolute;border-radius:50%;filter:blur(72px);pointer-events:none;will-change:transform}
+    .amelia-aurora-a{animation:amelia-aurora-a 10s ease-in-out infinite}
+    .amelia-aurora-b{animation:amelia-aurora-b 13s ease-in-out infinite}
+    .amelia-aurora-c{animation:amelia-aurora-c 8s ease-in-out infinite}
+    @keyframes amelia-cursor-blink{0%,100%{opacity:1}50%{opacity:0}}
+    .amelia-cursor{display:inline-block;width:2px;height:0.85em;background:currentColor;margin-left:2px;vertical-align:text-bottom;animation:amelia-cursor-blink 0.8s ease-in-out infinite}
+    @keyframes amelia-beam-spin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+    .amelia-border-beam{position:relative;overflow:hidden}
+    .amelia-border-beam::before{content:'';position:absolute;width:250%;aspect-ratio:1;top:50%;left:50%;transform:translate(-50%,-50%);background:conic-gradient(transparent 0deg,transparent 265deg,rgba(255,255,255,0.95) 295deg,rgba(255,255,255,0.5) 315deg,transparent 345deg);animation:amelia-beam-spin 3s linear infinite;pointer-events:none}
+    @keyframes amelia-dot-drift{0%{background-position:0 0}100%{background-position:28px 28px}}
+    .amelia-dot-grid{position:absolute;inset:0;pointer-events:none;animation:amelia-dot-drift 4s linear infinite}
+    @keyframes amelia-stripe-move{from{background-position:0 0}to{background-position:56px 56px}}
+    .amelia-stripe-bg{position:absolute;inset:0;pointer-events:none;animation:amelia-stripe-move 3s linear infinite}
+    .amelia-count{display:inline-block}
+    .amelia-expand-body{max-height:0;overflow:hidden;transition:max-height 0.35s cubic-bezier(0.4,0,0.2,1)}
+    .amelia-expand-body.open{max-height:320px}
+  `
+  // CSS de tema — solo para templates nuevos
+  const cssTheme = `
+    @keyframes amelia-neon-pulse{0%,100%{box-shadow:0 0 8px ${color}70,0 0 24px ${color}30}50%{box-shadow:0 0 20px ${color}cc,0 0 50px ${color}55}}
+    @keyframes amelia-cosmic-shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    @keyframes amelia-cosmic-float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-12px) scale(1.04)}}
+    .amelia-neon-card{transition:box-shadow 0.3s,transform 0.2s}
+    .amelia-neon-card:hover{box-shadow:0 0 28px ${color}80,0 0 60px ${color}30 !important;transform:translateY(-3px)}
+    .amelia-neon-btn{animation:amelia-neon-pulse 2.5s ease-in-out infinite}
+    .amelia-glass3d-card{transition:transform 0.35s,box-shadow 0.35s}
+    .amelia-glass3d-card:hover{transform:perspective(900px) rotateY(4deg) rotateX(2deg) translateY(-6px);box-shadow:0 32px 64px rgba(0,0,0,0.7),0 0 40px ${color}25 !important}
+    .amelia-cosmic-title{background:linear-gradient(90deg,${color},#a78bfa,#38bdf8,#f0abfc,${color});background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:amelia-cosmic-shimmer 6s ease infinite}
+    .amelia-cosmic-float{animation:amelia-cosmic-float 5s ease-in-out infinite}
+    .amelia-retro-card{border:3px solid #1a1a0f !important;border-radius:0 !important;box-shadow:4px 4px 0 #1a1a0f !important;transition:transform 0.15s,box-shadow 0.15s}
+    .amelia-retro-card:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #1a1a0f !important}
+    .amelia-retro-btn{border:3px solid #1a1a0f !important;border-radius:0 !important;box-shadow:4px 4px 0 #1a1a0f !important}
+    .amelia-retro-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #1a1a0f !important}
+    .amelia-pixel-heading{text-shadow:3px 3px 0 #1a1a0f,6px 6px 0 rgba(26,26,15,0.35)}
+    @keyframes amelia-terminal-blink{0%,100%{opacity:1}50%{opacity:0}}
+    .amelia-terminal-cursor{display:inline-block;width:0.65em;height:1em;background:${color};margin-left:3px;vertical-align:text-bottom;animation:amelia-terminal-blink 1s step-end infinite}
+  `
+  const revealScript = `
+    (function(){
+      function init(){
+        var els=document.querySelectorAll('.amelia-reveal');
+        if(!els.length)return;
+        if(!window.IntersectionObserver){els.forEach(function(e){e.classList.add('visible')});return}
+        var io=new IntersectionObserver(function(entries){
+          entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)}})
+        },{threshold:0.08,rootMargin:'0px 0px -40px 0px'});
+        els.forEach(function(e){io.observe(e)})
+      }
+      function initTypewriter(){
+        var sub=document.getElementById('amelia-hero-sub');
+        if(!sub)return;
+        var txt=sub.getAttribute('data-text')||'';
+        if(!txt)return;
+        sub.textContent='';
+        sub.style.opacity='1';
+        var cursor=document.createElement('span');
+        cursor.className='amelia-cursor';
+        sub.appendChild(cursor);
+        var i=0;
+        function typeChar(){
+          if(i<txt.length){sub.insertBefore(document.createTextNode(txt[i++]),cursor);setTimeout(typeChar,24)}
+          else{setTimeout(function(){if(cursor.parentNode)cursor.parentNode.removeChild(cursor)},1400)}
+        }
+        setTimeout(typeChar,600);
+      }
+      function initNumbers(){
+        var els=document.querySelectorAll('.amelia-count');
+        if(!els.length||!window.IntersectionObserver)return;
+        var io=new IntersectionObserver(function(entries){
+          entries.forEach(function(e){
+            if(!e.isIntersecting)return;
+            io.unobserve(e.target);
+            var el=e.target;
+            var raw=el.getAttribute('data-num')||el.textContent||'';
+            var num=parseFloat(raw.replace(/\./g,'').replace(/,/g,'.').replace(/[^0-9.]/g,''));
+            if(isNaN(num))return;
+            var prefix=raw.match(/^[^0-9]*/)[0];
+            var suffix=raw.match(/[^0-9.]*$/)[0];
+            var start=0,duration=1200,startTime=null;
+            function step(ts){
+              if(!startTime)startTime=ts;
+              var p=Math.min((ts-startTime)/duration,1);
+              var eased=1-Math.pow(1-p,3);
+              var cur=Math.round(eased*num);
+              el.textContent=prefix+cur.toLocaleString('es-CL')+suffix;
+              if(p<1)requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+          })
+        },{threshold:0.2});
+        els.forEach(function(e){
+          e.setAttribute('data-num',e.textContent||'');
+          io.observe(e);
+        })
+      }
+      function initTerminal(){
+        var h1=document.getElementById('amelia-terminal-h1');
+        if(!h1)return;
+        var txt=h1.textContent||'';
+        if(!txt)return;
+        h1.textContent='';
+        var cursor=document.createElement('span');
+        cursor.className='amelia-terminal-cursor';
+        h1.appendChild(cursor);
+        var i=0;
+        function typeChar(){
+          if(i<txt.length){h1.insertBefore(document.createTextNode(txt[i++]),cursor);setTimeout(typeChar,38)}
+        }
+        setTimeout(typeChar,400);
+      }
+      if(document.readyState==='loading'){
+        document.addEventListener('DOMContentLoaded',function(){init();initTypewriter();initNumbers();initTerminal()})
+      }else{init();initTypewriter();initNumbers();initTerminal()}
+    })()
+  `
+
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: ctaScript }} />
       {slug && <script dangerouslySetInnerHTML={{ __html: contactScript(slug) }} />}
       {slug && products.length > 0 && <script dangerouslySetInnerHTML={{ __html: cartScript(slug) }} />}
+      <script dangerouslySetInnerHTML={{ __html: revealScript }} />
+      <style dangerouslySetInnerHTML={{ __html: cssBase + ((t.neon || t.cosmic || t.glass3d || t.retro) ? cssTheme : '') }} />
       <div style={{ fontFamily, background: pageBgOverride, minHeight: '100vh', color: fg }}>
 
         {/* ── NAV ── */}
@@ -266,12 +428,17 @@ export function SiteRenderer({
               `<a href="#${l.anchor}" style="padding:0.4rem 0.75rem;border-radius:8px;font-size:0.8rem;font-weight:500;color:${t.muted};text-decoration:none;transition:all 0.15s" onmouseover="this.style.color='${sectFg}';this.style.background='rgba(128,128,128,0.12)'" onmouseout="this.style.color='${t.muted}';this.style.background='transparent'">${l.label}</a>`
             ).join('')
             return (
-              <span dangerouslySetInnerHTML={{ __html: `
-                <span style="display:flex;align-items:center;gap:4px">
-                  ${linkHtml}
-                  <span ${openAmelia} style="background:${t.mini ? 'transparent' : ctaBg};color:${t.mini ? t.muted : ctaFg};padding:${t.mini ? '0' : '0.5rem 1.25rem'};border-radius:8px;font-size:0.875rem;font-weight:700;cursor:pointer;display:inline-block;transition:opacity 0.15s;margin-left:0.25rem" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">${content.contact?.cta ?? 'Reservar'}</span>
-                </span>
-              `}} />
+              <>
+                <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
+                  dangerouslySetInnerHTML={{ __html: `
+                    <span style="display:flex;align-items:center;gap:4px">
+                      ${linkHtml}
+                    </span>
+                  `}} />
+                <span dangerouslySetInnerHTML={{ __html:
+                  `<span ${openAmelia} style="background:${t.mini ? 'transparent' : ctaBg};color:${t.mini ? t.muted : ctaFg};padding:${t.mini ? '0' : '0.5rem 1.25rem'};border-radius:8px;font-size:0.875rem;font-weight:700;cursor:pointer;display:inline-block;transition:opacity 0.15s;white-space:nowrap" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">${content.contact?.cta ?? 'Reservar'}</span>`
+                }} />
+              </>
             )
           })()}
         </nav>
@@ -280,18 +447,64 @@ export function SiteRenderer({
         <div id="inicio" style={{ background: heroBg, padding: t.mini ? '5rem 3rem' : t.bold ? '6rem 2rem' : '5rem 2rem',
                       position: 'relative', overflow: 'hidden' }}>
           {/* Dot grid para moderna */}
-          {!hasCover && !t.dark && !t.vib && !t.mini && !t.bold && !t.glass && (
+          {!hasCover && !t.dark && !t.vib && !t.mini && !t.bold && !t.glass && !t.retro && (
             <div style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none',
                           backgroundImage: `radial-gradient(${color}80 1px, transparent 1px)`,
                           backgroundSize: '28px 28px' }} />
           )}
           {/* Glassmorphism blob */}
-          {t.glass && (
+          {t.glass && !t.glass3d && (
             <>
               <div style={{ position: 'absolute', top: '-20%', left: '-10%', width: '60%', height: '60%', borderRadius: '50%',
                              background: `radial-gradient(${color}50, transparent 70%)`, filter: 'blur(60px)', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', bottom: '-20%', right: '-10%', width: '50%', height: '50%', borderRadius: '50%',
                              background: `radial-gradient(${color}30, transparent 70%)`, filter: 'blur(60px)', pointerEvents: 'none' }} />
+            </>
+          )}
+          {/* Neon glow streaks */}
+          {t.neon && !hasCover && (
+            <>
+              <div style={{ position:'absolute', top:'10%', left:'5%', width:'40%', height:'2px',
+                             background:`linear-gradient(90deg, transparent, ${color}90, transparent)`,
+                             filter:'blur(3px)', pointerEvents:'none', opacity:0.7 }} />
+              <div style={{ position:'absolute', bottom:'15%', right:'8%', width:'30%', height:'2px',
+                             background:`linear-gradient(90deg, transparent, ${color}70, transparent)`,
+                             filter:'blur(3px)', pointerEvents:'none', opacity:0.5 }} />
+            </>
+          )}
+          {/* Glass3D orbs */}
+          {t.glass3d && !hasCover && (
+            <>
+              <div style={{ position:'absolute', top:'-15%', left:'-5%', width:'55%', height:'55%', borderRadius:'50%',
+                             background:`radial-gradient(${color}45, transparent 70%)`, filter:'blur(80px)', pointerEvents:'none' }} />
+              <div style={{ position:'absolute', bottom:'-15%', right:'-5%', width:'45%', height:'45%', borderRadius:'50%',
+                             background:`radial-gradient(rgba(99,102,241,0.35), transparent 70%)`, filter:'blur(80px)', pointerEvents:'none' }} />
+            </>
+          )}
+          {/* Cosmic star field */}
+          {t.cosmic && !hasCover && (
+            <div style={{ position:'absolute', inset:0, pointerEvents:'none',
+                           backgroundImage:`radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px),
+                                           radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+                           backgroundSize:'60px 60px, 120px 120px',
+                           backgroundPosition:'0 0, 30px 30px', opacity:0.6 }} />
+          )}
+          {/* Retro grid */}
+          {t.retro && !hasCover && (
+            <div style={{ position:'absolute', inset:0, pointerEvents:'none',
+                           backgroundImage:`repeating-linear-gradient(0deg, ${color}15 0px, ${color}15 1px, transparent 1px, transparent 40px),
+                                           repeating-linear-gradient(90deg, ${color}15 0px, ${color}15 1px, transparent 1px, transparent 40px)`,
+                           opacity:0.8 }} />
+          )}
+          {/* Aurora blobs — templates sin fondo propio */}
+          {animAurora && !hasCover && !t.dark && !t.glass && !t.retro && !t.vib && (
+            <>
+              <div className="amelia-aurora-a" style={{ width:'55%', height:'60%', top:'-15%', left:'-8%',
+                background:`radial-gradient(${color}55, transparent 70%)`, opacity: t.bold ? 0.5 : 0.38 }} />
+              <div className="amelia-aurora-b" style={{ width:'45%', height:'50%', bottom:'-15%', right:'-5%',
+                background:`radial-gradient(${color}40, transparent 70%)`, opacity: t.bold ? 0.45 : 0.3 }} />
+              <div className="amelia-aurora-c" style={{ width:'32%', height:'38%', top:'15%', right:'18%',
+                background:`radial-gradient(rgba(255,255,255,0.6), transparent 70%)`, opacity: t.eleg ? 0.25 : 0.2 }} />
             </>
           )}
 
@@ -327,51 +540,73 @@ export function SiteRenderer({
               </div>
             )}
 
-            <h1 style={{
-              fontSize: t.mini ? 'clamp(2.5rem,5vw,4rem)'
-                       : t.bold ? 'clamp(2.5rem,6vw,4.5rem)'
-                       : t.glass ? 'clamp(2rem,5vw,3.5rem)'
-                       : 'clamp(1.875rem,4vw,2.875rem)',
-              fontWeight: 900, lineHeight: 1.08,
-              color: themeH ?? (t.over || t.bold || t.glass ? 'white' : '#111827'),
-              marginBottom: '1rem',
-              letterSpacing: (t.mini || t.bold) ? '-0.03em' : 'normal',
-              fontFamily: t.eleg ? 'Georgia, serif' : 'inherit',
-            }}>
+            <h1
+              id={t.neon && animTerminal ? 'amelia-terminal-h1' : undefined}
+              suppressHydrationWarning={t.neon}
+              className={
+                t.cosmic && !themeH ? 'amelia-cosmic-title amelia-cosmic-float'
+                : t.retro ? 'amelia-pixel-heading'
+                : undefined
+              }
+              style={{
+                fontSize: t.mini ? 'clamp(2.5rem,5vw,4rem)'
+                         : t.bold ? 'clamp(2.5rem,6vw,4.5rem)'
+                         : t.glass ? 'clamp(2rem,5vw,3.5rem)'
+                         : 'clamp(1.875rem,4vw,2.875rem)',
+                fontWeight: 900, lineHeight: 1.08,
+                color: themeH ?? (t.cosmic ? undefined : t.over || t.bold || t.glass ? 'white' : t.retro ? '#1a1a0f' : '#111827'),
+                textShadow: t.neon ? `0 0 30px ${color}90, 0 0 60px ${color}40` : undefined,
+                marginBottom: '1rem',
+                letterSpacing: (t.mini || t.bold) ? '-0.03em' : t.retro ? '0.02em' : 'normal',
+                fontFamily: t.eleg ? 'Georgia, serif' : t.retro ? '"Courier New", Courier, monospace' : 'inherit',
+                textTransform: t.retro ? 'uppercase' : undefined,
+              }}>
               {content.hero.title}
             </h1>
 
             {t.mini && <div style={{ width: 48, height: 4, background: color, borderRadius: 2, marginBottom: '1.25rem' }} />}
             {t.bold && <div style={{ width: 64, height: 4, background: color, borderRadius: 2, margin: '0 auto 1.5rem' }} />}
 
-            <p style={{
-              fontSize: t.mini ? '1.125rem' : '1.0625rem',
-              color: muted,
-              marginBottom: '2.25rem', lineHeight: 1.75,
-              maxWidth: t.mini ? '500px' : '600px',
-              margin: t.mini ? '0 0 2rem' : '0 auto 2.25rem',
-            }}>
+            <p id={animTypewriter && !t.retro && !t.cosmic ? 'amelia-hero-sub' : undefined}
+              data-text={animTypewriter && !t.retro && !t.cosmic ? content.hero.subtitle : undefined}
+              suppressHydrationWarning={animTypewriter && !t.retro && !t.cosmic}
+              style={{
+                fontSize: t.mini ? '1.125rem' : '1.0625rem',
+                color: muted,
+                marginBottom: '2.25rem', lineHeight: 1.75,
+                maxWidth: t.mini ? '500px' : '600px',
+                margin: t.mini ? '0 0 2rem' : '0 auto 2.25rem',
+                opacity: (animTypewriter && !t.retro && !t.cosmic) ? 0 : 1,
+              }}>
               {content.hero.subtitle}
             </p>
 
             <span dangerouslySetInnerHTML={{ __html:
-              `<span ${openAmelia} style="display:inline-block;background:${ctaBg};color:${ctaFg};padding:0.9rem 2.5rem;border-radius:${t.bold?'6px':'12px'};font-weight:700;font-size:1rem;box-shadow:0 6px 24px ${color}45;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;letter-spacing:${t.bold?'-0.01em':'normal'}" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 32px ${color}55'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 24px ${color}45'">${content.hero.cta}</span>`
+              `<span class="${t.neon ? 'amelia-neon-btn' : t.retro ? 'amelia-retro-btn' : animBorderBeam ? 'amelia-border-beam' : ''}" ${openAmelia} style="display:inline-block;background:${ctaBg};color:${ctaFg};padding:0.9rem 2.5rem;border-radius:${(t.bold||t.retro)?'4px':'12px'};font-weight:700;font-size:1rem;box-shadow:0 6px 24px ${color}45;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;letter-spacing:${(t.bold||t.retro)?'-0.01em':'normal'};font-family:${t.retro?'"Courier New",Courier,monospace':'inherit'};text-transform:${t.retro?'uppercase':'none'}" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 32px ${color}55'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 24px ${color}45'">${content.hero.cta}</span>`
             }} />
             {t.mini && <span style={{ fontSize: '0.875rem', color: t.muted, marginLeft: '1rem' }}>Sin compromiso</span>}
           </div>
         </div>
 
         {/* ── NOSOTROS ── */}
-        <div style={{
+        <div className={animScrollReveal ? 'amelia-reveal' : undefined} style={{
           padding: t.mini ? '4rem 3rem' : '4.5rem 2rem',
           textAlign: t.mini ? 'left' : 'center',
+          position: 'relative', overflow: 'hidden',
           background: t.dark   ? '#0d0d14'
                     : t.vib   ? 'rgba(0,0,0,0.12)'
                     : t.glass ? 'rgba(255,255,255,0.04)'
                     : t.bold  ? 'rgba(255,255,255,0.03)'
                     : 'white',
         }}>
-          {!t.mini && !t.bold && <div style={{ width: 44, height: 3, background: color, borderRadius: 2, margin: '0 auto 1.25rem' }} />}
+          {/* Fractal dot grid — templates sin fondo oscuro propio */}
+          {!t.dark && !t.vib && !t.glass && !t.bold && (
+            <div className="amelia-dot-grid" style={{
+              backgroundImage: `radial-gradient(${color}55 1px, transparent 1px)`,
+              backgroundSize: '28px 28px', opacity: 0.22,
+            }} />
+          )}
+          {!t.mini && !t.bold && <div style={{ width: 44, height: 3, background: color, borderRadius: 2, margin: '0 auto 1.25rem', position: 'relative' }} />}
           {t.bold && <p style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color, marginBottom: '0.75rem', textAlign: 'center' }}>QUIÉNES SOMOS</p>}
           <p style={{
             color: muted, lineHeight: 1.9, fontSize: '1.0625rem',
@@ -400,30 +635,49 @@ export function SiteRenderer({
             </div>
           ) : (
             <>
-              {!t.bold && <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+              {!t.bold && <div className={animScrollReveal ? 'amelia-reveal' : undefined} style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
                 <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: sectFg, margin: '0 0 0.5rem',
-                              fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>Servicios</h2>
+                              fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>{content.sectionTitles?.services ?? 'Servicios'}</h2>
                 <p style={{ color: t.muted, fontSize: 13, margin: 0 }}>Haz clic en un servicio para reservar</p>
               </div>}
               {t.bold && <p style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color, marginBottom: '2rem', textAlign: 'center' }}>LO QUE HACEMOS</p>}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))',
                              gap: '1.25rem', maxWidth: '960px', margin: '0 auto' }}>
                 {(content.services as Service[]).map((s, i) => {
-                  const cardBg  = t.dark  ? 'rgba(255,255,255,0.04)'
-                                : t.glass ? 'rgba(255,255,255,0.07)'
-                                : t.bold  ? 'rgba(255,255,255,0.06)'
-                                : t.vib   ? 'rgba(255,255,255,0.15)' : 'white'
-                  const cardBrd = (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.1)' : '#f0f0f0'
-                  const fg2     = (t.dark || t.vib || t.glass || t.bold) ? 'white' : '#111827'
+                  const cardBg  = t.neon    ? `rgba(255,255,255,0.03)`
+                                : t.glass3d ? 'rgba(255,255,255,0.06)'
+                                : t.retro   ? '#fffef5'
+                                : t.dark    ? 'rgba(255,255,255,0.04)'
+                                : t.glass   ? 'rgba(255,255,255,0.07)'
+                                : t.bold    ? 'rgba(255,255,255,0.06)'
+                                : t.vib     ? 'rgba(255,255,255,0.15)' : 'white'
+                  const cardBrd = t.neon    ? `${color}55`
+                                : t.retro   ? '#1a1a0f'
+                                : (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.1)' : '#f0f0f0'
+                  const fg2     = (t.dark || t.vib || t.glass || t.bold) ? 'white' : t.retro ? '#1a1a0f' : '#111827'
+                  const cardClass = t.neon ? 'amelia-neon-card' : t.glass3d ? 'amelia-glass3d-card' : t.retro ? 'amelia-retro-card' : 'amelia-card-3d'
+                  const cardRadius = t.retro ? '0' : '16px'
+                  const cardBrdW  = t.neon ? '1.5px' : t.retro ? '3px' : '1px'
+                  const delay = `${i * 80}ms`
+                  const isLong = (s.description ?? '').length > 80
                   return (
-                    <div key={i} dangerouslySetInnerHTML={{ __html:
-                      `<div ${openSvc(s.name)} style="background:${cardBg};border:1px solid ${cardBrd};border-radius:16px;overflow:hidden;cursor:pointer;transition:transform 0.18s,box-shadow 0.18s;backdrop-filter:blur(4px)" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 32px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-                          ${s.image ? `<div style="height:140px;background:url('${s.image}') center/cover no-repeat"></div>` : `<div style="height:6px;background:${color}"></div>`}
+                    <div key={i} className={animScrollReveal ? 'amelia-reveal' : undefined} style={{ transitionDelay: delay }} dangerouslySetInnerHTML={{ __html:
+                      `<div class="${cardClass}" style="background:${cardBg};border:${cardBrdW} solid ${cardBrd};border-radius:${cardRadius};overflow:hidden;backdrop-filter:${t.glass3d?'blur(16px)':'blur(4px)'};${t.glass3d?'box-shadow:0 20px 40px rgba(0,0,0,0.5)':''}">
+                          ${s.image ? `<div ${openSvc(s.name)} style="height:140px;background:url('${s.image}') center/cover no-repeat;cursor:pointer"></div>` : `<div style="height:${t.retro?'8px':'6px'};background:${t.neon?`linear-gradient(90deg,${color},${color}88)`:color}"></div>`}
                           <div style="padding:1.125rem 1.25rem">
-                            <p style="font-weight:700;color:${fg2};margin:0 0 0.375rem;font-size:0.9375rem">${s.name}</p>
-                            <p style="color:${t.muted};font-size:0.8125rem;line-height:1.6;margin:0 0 ${s.price?'0.625rem':'0.75rem'}">${s.description}</p>
-                            ${s.price ? `<p style="color:${color};font-weight:800;font-size:1rem;margin:0 0 0.75rem">${s.price}</p>` : ''}
-                            <div style="display:inline-flex;align-items:center;gap:4px;background:${color}18;color:${color};padding:5px 13px;border-radius:20px;font-size:11px;font-weight:700">Reservar →</div>
+                            <p ${openSvc(s.name)} style="font-weight:700;color:${fg2};margin:0 0 0.375rem;font-size:0.9375rem;font-family:${t.retro?'"Courier New",Courier,monospace':'inherit'};cursor:pointer">${s.name}</p>
+                            ${isLong
+                              ? `<div>
+                                   <div class="amelia-expand-body" id="aexp-${i}" style="overflow:hidden;max-height:0;transition:max-height 0.35s cubic-bezier(0.4,0,0.2,1)">
+                                     <p style="color:${t.muted};font-size:0.8125rem;line-height:1.6;margin:0 0 0.375rem">${s.description}</p>
+                                   </div>
+                                   <button onclick="var b=document.getElementById('aexp-${i}');var open=b.style.maxHeight&&b.style.maxHeight!=='0px';b.style.maxHeight=open?'0px':'320px';this.textContent=open?'Ver más ↓':'Ver menos ↑'"
+                                     style="background:none;border:none;color:${color};font-size:0.75rem;font-weight:700;cursor:pointer;padding:0 0 0.375rem;font-family:inherit">Ver más ↓</button>
+                                 </div>`
+                              : `<p style="color:${t.muted};font-size:0.8125rem;line-height:1.6;margin:0 0 ${s.price?'0.625rem':'0.75rem'}">${s.description}</p>`
+                            }
+                            ${s.price ? `<p style="color:${color};font-weight:800;font-size:1rem;margin:0 0 0.75rem;${t.neon?`text-shadow:0 0 12px ${color}80`:''}">${s.price}</p>` : ''}
+                            <div ${openSvc(s.name)} style="display:inline-flex;align-items:center;gap:4px;background:${color}18;color:${color};padding:5px 13px;border-radius:${t.retro?'0':'20px'};font-size:11px;font-weight:700;cursor:pointer;${t.retro?`border:2px solid ${color}`:''};${t.neon?`box-shadow:0 0 10px ${color}50`:''}">Reservar →</div>
                           </div>
                         </div>`
                     }} />
@@ -559,7 +813,7 @@ export function SiteRenderer({
             <div style={{ maxWidth: 960, margin: '0 auto' }}>
               <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
                             fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
-                ¿Por qué elegirnos?
+                {content.sectionTitles?.benefits ?? '¿Por qué elegirnos?'}
               </h2>
               <p style={{ textAlign: 'center', color: t.muted, fontSize: '1rem', marginBottom: '3rem' }}>
                 Lo que nos hace diferentes
@@ -590,7 +844,7 @@ export function SiteRenderer({
             <div style={{ maxWidth: 860, margin: '0 auto' }}>
               <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
                             fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
-                ¿Cómo funciona?
+                {content.sectionTitles?.steps ?? '¿Cómo funciona?'}
               </h2>
               <p style={{ textAlign: 'center', color: t.muted, fontSize: '1rem', marginBottom: '3rem' }}>
                 Simple y rápido — así trabajamos
@@ -619,22 +873,29 @@ export function SiteRenderer({
         {content.pricing && content.pricing.length > 0 && (
           <div id="precios" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : 'white' }}>
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
-              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
+              <h2 className={animScrollReveal ? 'amelia-reveal' : undefined} style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
                             fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
-                Información y precios
+                {content.sectionTitles?.pricing ?? 'Información y precios'}
               </h2>
-              <p style={{ textAlign: 'center', color: t.muted, fontSize: '1rem', marginBottom: '3rem' }}>
+              <p className={animScrollReveal ? 'amelia-reveal' : undefined} style={{ textAlign: 'center', color: t.muted, fontSize: '1rem', marginBottom: '3rem', transitionDelay: '80ms' }}>
                 Transparencia total, sin sorpresas
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '1.25rem' }}>
                 {content.pricing.map((p, i) => (
-                  <div key={i} style={{
-                    background: p.highlighted
-                      ? `linear-gradient(135deg, ${color}18, ${color}08)`
-                      : (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : '#f9fafb',
-                    border: p.highlighted ? `2px solid ${color}66` : `1px solid ${t.border}`,
-                    borderRadius: 16, padding: '2rem', textAlign: 'center', position: 'relative',
-                    backdropFilter: (t.glass || t.bold) ? 'blur(8px)' : 'none',
+                  <div key={i}
+                    className={animScrollReveal ? `amelia-reveal ${t.neon ? 'amelia-neon-card' : t.glass3d ? 'amelia-glass3d-card' : t.retro ? 'amelia-retro-card' : 'amelia-card-3d'}` : (t.neon ? 'amelia-neon-card' : t.glass3d ? 'amelia-glass3d-card' : t.retro ? 'amelia-retro-card' : 'amelia-card-3d')}
+                    style={{
+                      transitionDelay: `${i * 100}ms`,
+                      background: p.highlighted
+                        ? (t.neon ? `linear-gradient(135deg, ${color}25, ${color}10)` : `linear-gradient(135deg, ${color}18, ${color}08)`)
+                        : (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : t.retro ? '#fffef5' : '#f9fafb',
+                      border: t.neon ? `1.5px solid ${p.highlighted ? color : color+'55'}` :
+                              t.retro ? '3px solid #1a1a0f' :
+                              p.highlighted ? `2px solid ${color}66` : `1px solid ${t.border}`,
+                      borderRadius: t.retro ? 0 : 16,
+                      padding: '2rem', textAlign: 'center', position: 'relative',
+                      backdropFilter: (t.glass || t.bold || t.glass3d) ? 'blur(16px)' : 'none',
+                      boxShadow: t.glass3d ? '0 20px 40px rgba(0,0,0,0.5)' : t.retro ? '4px 4px 0 #1a1a0f' : undefined,
                   }}>
                     {p.highlighted && (
                       <span style={{
@@ -647,11 +908,11 @@ export function SiteRenderer({
                     )}
                     <p style={{ fontWeight: 700, color: sectFg, fontSize: '1.125rem', margin: '0 0 0.5rem' }}>{p.title}</p>
                     {p.price && (
-                      <p style={{ fontSize: '1.75rem', fontWeight: 800, color: color, margin: '0 0 1rem' }}>{p.price}</p>
+                      <p className={animNumber ? 'amelia-count' : undefined} suppressHydrationWarning style={{ fontSize: '1.75rem', fontWeight: 800, color: color, margin: '0 0 1rem' }}>{p.price}</p>
                     )}
                     <p style={{ color: t.muted, fontSize: '0.875rem', lineHeight: 1.6, margin: '0 0 1.5rem' }}>{p.desc}</p>
                     <div dangerouslySetInnerHTML={{ __html:
-                      `<span onclick="document.getElementById('contacto')?.scrollIntoView({behavior:'smooth'})"
+                      `<span onclick="window.__ameliaOpen?.(null)"
                         style="display:inline-block;padding:0.625rem 1.5rem;border-radius:10px;font-size:0.875rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;
                         background:${p.highlighted ? color : 'transparent'};color:${p.highlighted ? 'white' : color};
                         border:2px solid ${color}" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
@@ -669,7 +930,7 @@ export function SiteRenderer({
         {gallery.length > 0 && (
           <div id="galeria" style={{ padding: '4rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.02)' : 'white' }}>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '2.5rem', color: sectFg }}>
-              Nuestros trabajos
+              {content.sectionTitles?.gallery ?? 'Nuestros trabajos'}
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))',
                            gap: galFrame === 'polaroid' ? '1.5rem' : '0.75rem', maxWidth: '960px', margin: '0 auto' }}>
@@ -697,7 +958,7 @@ export function SiteRenderer({
         {content.reviews && content.reviews.length > 0 && (
           <div id="testimonios" style={{ padding: '4rem 2rem', background: t.sectBg }}>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '2.5rem', color: sectFg }}>
-              Lo que dicen nuestros clientes
+              {content.sectionTitles?.reviews ?? 'Lo que dicen nuestros clientes'}
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))',
                            gap: '1.25rem', maxWidth: '960px', margin: '0 auto' }}>
@@ -722,20 +983,25 @@ export function SiteRenderer({
 
         {/* ── FAQ ── */}
         {content.faq && content.faq.length > 0 && (
-          <div id="faq" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : '#f9fafb' }}>
+          <div id="faq" style={{ padding: '5rem 2rem', position: 'relative', overflow: 'hidden', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : '#f9fafb' }}>
+            {/* Animated diagonal stripes overlay */}
+            <div className="amelia-stripe-bg" style={{
+              backgroundImage: `repeating-linear-gradient(45deg,${color}0d 0px,${color}0d 2px,transparent 2px,transparent 14px)`,
+              backgroundSize: '56px 56px', opacity: 0.6,
+            }} />
             <div style={{ maxWidth: 720, margin: '0 auto' }}>
-              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
+              <h2 className={animScrollReveal ? 'amelia-reveal' : undefined} style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
                             fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
-                Preguntas frecuentes
+                {content.sectionTitles?.faq ?? 'Preguntas frecuentes'}
               </h2>
-              <p style={{ textAlign: 'center', color: t.muted, fontSize: '1rem', marginBottom: '3rem' }}>
+              <p className={animScrollReveal ? 'amelia-reveal' : undefined} style={{ textAlign: 'center', color: t.muted, fontSize: '1rem', marginBottom: '3rem', transitionDelay: '80ms' }}>
                 Respondemos las dudas más comunes
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {content.faq.map((item, i) => (
-                  <div key={i} dangerouslySetInnerHTML={{ __html:
+                  <div key={i} className={animScrollReveal ? 'amelia-reveal' : undefined} style={{ transitionDelay: `${i * 60}ms` }} dangerouslySetInnerHTML={{ __html:
                     `<div style="border:1px solid ${t.border};border-radius:12px;overflow:hidden">
-                      <button onclick="var a=this.nextElementSibling;var arr=this.querySelector('span');if(a.style.display==='none'){a.style.display='block';arr.style.transform='rotate(180deg)'}else{a.style.display='none';arr.style.transform=''}"
+                      <button onclick="var a=this.nextElementSibling;var arr=this.querySelector('span:last-child');if(a.style.display==='none'){a.style.display='block';arr.style.transform='rotate(180deg)'}else{a.style.display='none';arr.style.transform=''}"
                         style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:1.125rem 1.375rem;background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.05)':'white'};border:none;cursor:pointer;text-align:left;gap:1rem;font-family:inherit">
                         <span style="font-weight:600;font-size:0.9375rem;color:${sectFg};line-height:1.5">${item.q}</span>
                         <span style="font-size:1.125rem;color:${color};flex-shrink:0;transition:transform 0.2s">▾</span>

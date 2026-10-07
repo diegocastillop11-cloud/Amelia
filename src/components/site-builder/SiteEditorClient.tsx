@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { SiteContent } from '@/types/database'
 
-type TemplateId = 'moderna' | 'clasica' | 'dark' | 'vibrante' | 'elegante' | 'minimalista' | 'bold' | 'sunset' | 'glass'
+type TemplateId = 'moderna' | 'clasica' | 'dark' | 'vibrante' | 'elegante' | 'minimalista' | 'bold' | 'sunset' | 'glass' | 'neon' | 'glass3d' | 'cosmic' | 'retro'
 interface Service { name: string; description: string; price: string; image?: string; featured?: boolean }
 
 interface Props {
@@ -53,10 +53,12 @@ function logoImgStyle(shape: string, size: number): React.CSSProperties {
   if (shape==='square')  return {...base, width:size, objectFit:'cover', borderRadius:4}
   return {...base, maxWidth:size*4}
 }
-const TEMPLATES: {id: TemplateId; label: string}[] = [
+const TEMPLATES: {id: TemplateId; label: string; badge?: string}[] = [
   {id:'moderna',label:'Moderna'},{id:'clasica',label:'Clásica'},{id:'minimalista',label:'Minimalista'},
   {id:'bold',label:'Bold'},{id:'sunset',label:'Sunset'},{id:'vibrante',label:'Vibrante'},
   {id:'glass',label:'Glass'},{id:'elegante',label:'Elegante'},{id:'dark',label:'Dark'},
+  {id:'neon',label:'Neon',badge:'nuevo'},{id:'glass3d',label:'Glass 3D',badge:'nuevo'},
+  {id:'cosmic',label:'Cosmic',badge:'nuevo'},{id:'retro',label:'Retro',badge:'nuevo'},
 ]
 const FONTS = [
   {id:'inter',label:'Inter',family:'Inter, sans-serif',google:''},
@@ -238,6 +240,13 @@ export default function SiteEditorClient({
     })
   },[name,color,template,sched])
 
+  const editTitle = useCallback((key:string, val:string) => {
+    setContent(prev=>{
+      const next = { ...prev, sectionTitles: { ...(prev.sectionTitles??{}), [key]: val } }
+      sched(next,name,color,template); return next
+    })
+  },[name,color,template,sched])
+
   const editName = useCallback((val:string)=>{setName(val);sched(content,val,color,template)},[content,color,template,sched])
   const setCol   = (c:string)=>{setColor(c);sched(content,name,c,template)}
   const setTpl   = (t:TemplateId)=>{setTemplate(t);sched(content,name,color,t)}
@@ -361,18 +370,42 @@ export default function SiteEditorClient({
                 <div>
                   <p style={S}>Plantilla</p>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
-                    {TEMPLATES.map(t=>(
-                      <button key={t.id} onClick={()=>setTpl(t.id)} style={{background:template===t.id?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.03)',border:`1.5px solid ${template===t.id?'rgba(99,102,241,0.45)':'rgba(255,255,255,0.06)'}`,borderRadius:8,padding:6,cursor:'pointer',textAlign:'left',fontFamily:'Inter,sans-serif'}}>
-                        <div style={{height:28,borderRadius:5,marginBottom:4,background:t.id==='dark'?'#0a0a0f':t.id==='bold'?'#111827':t.id==='glass'?'#0f172a':t.id==='vibrante'||t.id==='sunset'?`linear-gradient(135deg,${color},${color}bb)`:t.id==='elegante'?'#faf9f7':'white',border:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',padding:'3px 5px',gap:3}}>
-                          <div style={{height:4,borderRadius:2,background:color,opacity:0.9}}/><div style={{height:2,borderRadius:1,background:'rgba(128,128,128,0.25)'}}/>
-                        </div>
-                        <p style={{fontSize:10,fontWeight:600,color:template===t.id?'#a5b4fc':'#6b6b8a'}}>{t.label}</p>
-                      </button>
-                    ))}
+                    {TEMPLATES.map(t=>{
+                      const previewBg = t.id==='dark'?'#0a0a0f':t.id==='neon'?'#05000f':t.id==='cosmic'?'#03030e':t.id==='glass3d'?'linear-gradient(135deg,#0b0f1a,#130d2e)':t.id==='bold'?'#111827':t.id==='glass'?'#0f172a':t.id==='vibrante'||t.id==='sunset'?`linear-gradient(135deg,${color},${color}bb)`:t.id==='elegante'?'#faf9f7':t.id==='retro'?'#fffef5':'white'
+                      return (
+                        <button key={t.id} onClick={()=>setTpl(t.id)} style={{background:template===t.id?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.03)',border:`1.5px solid ${template===t.id?'rgba(99,102,241,0.45)':'rgba(255,255,255,0.06)'}`,borderRadius:8,padding:6,cursor:'pointer',textAlign:'left',fontFamily:'Inter,sans-serif',position:'relative'}}>
+                          <div style={{height:28,borderRadius:5,marginBottom:4,background:previewBg,border:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',padding:'3px 5px',gap:3}}>
+                            <div style={{height:4,borderRadius:t.id==='retro'?0:2,background:t.id==='neon'?`linear-gradient(90deg,${color},${color}88)`:color,opacity:0.9,boxShadow:t.id==='neon'?`0 0 6px ${color}90`:'none'}}/><div style={{height:2,borderRadius:1,background:'rgba(128,128,128,0.25)'}}/>
+                          </div>
+                          <p style={{fontSize:10,fontWeight:600,color:template===t.id?'#a5b4fc':'#6b6b8a',margin:0}}>{t.label}</p>
+                          {t.badge&&<span style={{position:'absolute',top:3,right:3,fontSize:8,fontWeight:700,background:'rgba(16,185,129,0.2)',color:'#34d399',padding:'1px 5px',borderRadius:4,textTransform:'uppercase',letterSpacing:'0.03em'}}>{t.badge}</span>}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
                 <div>
-                  <p style={S}>Color principal</p>
+                  <p style={S}>Paleta de color</p>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5,marginBottom:8}}>
+                    {([
+                      {id:'oceano',  label:'🌊 Océano',  color:'#0284c7', bg:'#f0f7ff'},
+                      {id:'bosque',  label:'🌿 Bosque',  color:'#10b981', bg:'#0a1a0f'},
+                      {id:'calido',  label:'☀️ Cálido',  color:'#f97316', bg:'#faf8f4'},
+                      {id:'violeta', label:'💜 Violeta', color:'#8b5cf6', bg:'white'},
+                      {id:'rosa',    label:'🌸 Rosa',    color:'#ec4899', bg:'white'},
+                      {id:'coral',   label:'❤️ Coral',   color:'#ef4444', bg:'white'},
+                    ] as const).map(p=>(
+                      <button key={p.id} onClick={()=>setCol(p.color)}
+                        style={{display:'flex',alignItems:'center',gap:6,padding:'5px 7px',borderRadius:7,
+                          background:color===p.color?'rgba(255,255,255,0.1)':'rgba(255,255,255,0.03)',
+                          border:`1.5px solid ${color===p.color?'rgba(255,255,255,0.3)':'rgba(255,255,255,0.06)'}`,
+                          cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
+                        <div style={{width:14,height:14,borderRadius:4,background:p.color,flexShrink:0,boxShadow:`0 0 6px ${p.color}60`}}/>
+                        <span style={{fontSize:10,fontWeight:500,color:color===p.color?'white':'#8b8bab',whiteSpace:'nowrap'}}>{p.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p style={{...S,marginBottom:4}}>Color personalizado</p>
                   <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
                     {COLORS.map(c=><button key={c} onClick={()=>setCol(c)} style={{width:24,height:24,borderRadius:6,background:c,border:'none',cursor:'pointer',outline:color===c?'3px solid white':'none',outlineOffset:1,transform:color===c?'scale(1.2)':'scale(1)',transition:'all 0.15s',boxShadow:color===c?`0 0 10px ${c}88`:'none'}}/>)}
                   </div>
@@ -428,6 +461,31 @@ export default function SiteEditorClient({
                     )}
                   </div>
                 </div>
+                {/* ── Animaciones ── */}
+                <div>
+                  <p style={S}>⚡ Animaciones</p>
+                  <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                    {([
+                      {key:'animAurora',      label:'Aurora en hero',              icon:'🌅'},
+                      {key:'animTypewriter',  label:'Typewriter en subtítulo',      icon:'⌨️'},
+                      {key:'animTerminal',    label:'Terminal en título (Neon)',    icon:'💻'},
+                      {key:'animBorderBeam',  label:'Border Beam en botón',         icon:'✨'},
+                      {key:'animScrollReveal',label:'Scroll reveal en secciones',   icon:'🎞️'},
+                      {key:'animNumber',      label:'Contador animado en precios',  icon:'🔢'},
+                    ] as {key: 'animAurora'|'animTypewriter'|'animTerminal'|'animBorderBeam'|'animScrollReveal'|'animNumber'; label: string; icon: string}[]).map(anim=>{
+                      const val = content.theme?.[anim.key] ?? true
+                      return (
+                        <button key={anim.key} onClick={()=>{
+                          const nc={...content,theme:{...content.theme,[anim.key]:!val}}
+                          setContent(nc);sched(nc,name,color,template)
+                        }} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'7px 10px',borderRadius:8,border:`1.5px solid ${val?'rgba(99,102,241,0.35)':'rgba(255,255,255,0.06)'}`,background:val?'rgba(99,102,241,0.08)':'rgba(255,255,255,0.02)',cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
+                          <span style={{fontSize:10,color:val?'#c4b5fd':'#4b4b6b',fontWeight:500}}>{anim.icon} {anim.label}</span>
+                          <span style={{fontSize:11,fontWeight:700,color:val?'#a5b4fc':'#4b4b6b'}}>{val?'ON':'OFF'}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
                 <div>
                   <input ref={logoRef} type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{const f=e.target.files?.[0];if(!f)return;const u=await upload(f,'logo');if(u){setLogo(u);sched(content,name,color,template)}}}/>
                   <input ref={coverRef} type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{const f=e.target.files?.[0];if(!f)return;const u=await upload(f,'cover');if(u){setCover(u);sched(content,name,color,template)}}}/>
@@ -436,10 +494,13 @@ export default function SiteEditorClient({
                     {/* Logo */}
                     <div>
                       <p style={S}>Logo</p>
-                      <button onClick={()=>logoRef.current?.click()} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,border:`1.5px dashed ${logo?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'}`,background:'rgba(255,255,255,0.02)',cursor:'pointer',fontFamily:'Inter,sans-serif',width:'100%'}}>
-                        {logo?<img src={logo} alt="" style={{width:22,height:22,objectFit:'contain',borderRadius:4}}/>:<span style={{fontSize:14}}>🏷</span>}
-                        <span style={{fontSize:10,color:logo?'#a5b4fc':'#4b4b6b',fontWeight:500}}>{logo?'Cambiar logo':'Subir logo'}</span>
-                      </button>
+                      <div style={{display:'flex',gap:4}}>
+                        <button onClick={()=>logoRef.current?.click()} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,border:`1.5px dashed ${logo?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'}`,background:'rgba(255,255,255,0.02)',cursor:'pointer',fontFamily:'Inter,sans-serif',flex:1}}>
+                          {logo?<img src={logo} alt="" style={{width:22,height:22,objectFit:'contain',borderRadius:4}}/>:<span style={{fontSize:14}}>🏷</span>}
+                          <span style={{fontSize:10,color:logo?'#a5b4fc':'#4b4b6b',fontWeight:500}}>{logo?'Cambiar logo':'Subir logo'}</span>
+                        </button>
+                        {logo&&<button onClick={()=>{setLogo(null);sched(content,name,color,template)}} style={{padding:'7px 9px',borderRadius:8,border:'1.5px solid rgba(239,68,68,0.3)',background:'rgba(239,68,68,0.06)',cursor:'pointer',color:'#f87171',fontSize:13,lineHeight:1}} title="Eliminar logo">✕</button>}
+                      </div>
                       {logo&&(
                         <div style={{marginTop:8}}>
                           <div style={{display:'flex',gap:4,marginBottom:6}}>
@@ -466,10 +527,13 @@ export default function SiteEditorClient({
                     {/* Portada */}
                     <div>
                       <p style={S}>Portada</p>
-                      <button onClick={()=>coverRef.current?.click()} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,border:`1.5px dashed ${cover?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'}`,background:'rgba(255,255,255,0.02)',cursor:'pointer',fontFamily:'Inter,sans-serif',width:'100%'}}>
-                        {cover?<img src={cover} alt="" style={{width:22,height:22,objectFit:'cover',borderRadius:4}}/>:<span style={{fontSize:14}}>🖼</span>}
-                        <span style={{fontSize:10,color:cover?'#a5b4fc':'#4b4b6b',fontWeight:500}}>{cover?'Cambiar portada':'Subir portada'}</span>
-                      </button>
+                      <div style={{display:'flex',gap:4}}>
+                        <button onClick={()=>coverRef.current?.click()} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,border:`1.5px dashed ${cover?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'}`,background:'rgba(255,255,255,0.02)',cursor:'pointer',fontFamily:'Inter,sans-serif',flex:1}}>
+                          {cover?<img src={cover} alt="" style={{width:22,height:22,objectFit:'cover',borderRadius:4}}/>:<span style={{fontSize:14}}>🖼</span>}
+                          <span style={{fontSize:10,color:cover?'#a5b4fc':'#4b4b6b',fontWeight:500}}>{cover?'Cambiar portada':'Subir portada'}</span>
+                        </button>
+                        {cover&&<button onClick={()=>{setCover(null);sched(content,name,color,template)}} style={{padding:'7px 9px',borderRadius:8,border:'1.5px solid rgba(239,68,68,0.3)',background:'rgba(239,68,68,0.06)',cursor:'pointer',color:'#f87171',fontSize:13,lineHeight:1}} title="Eliminar portada">✕</button>}
+                      </div>
                     </div>
                     {/* Galería */}
                     <div>
@@ -723,7 +787,7 @@ export default function SiteEditorClient({
                       </div>
                     ):(
                       <>
-                        <h2 style={{fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'0.5rem',color:navFg}}>Servicios</h2>
+                        <h2 contentEditable suppressContentEditableWarning style={{...eBase,fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'0.5rem',color:navFg}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);editTitle('services',e.currentTarget.innerText.trim()||'Servicios')}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{content.sectionTitles?.services??'Servicios'}</h2>
                         <p style={{textAlign:'center',fontSize:11,color:'rgba(165,180,252,0.6)',marginBottom:'1.5rem'}}>Clic en campo para editar · Clic en imagen para cambiarla</p>
                         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(210px,1fr))',gap:'1.25rem',maxWidth:'960px',margin:'0 auto'}}>
                           {/* ✅ ServiceCard como componente separado — sin hooks en map */}
@@ -744,7 +808,7 @@ export default function SiteEditorClient({
                 {/* GALERÍA */}
                 {sections.galeria&&gallery.length>0&&(
                   <div style={{padding:'3.5rem 2rem',background:dark?'rgba(255,255,255,0.02)':'white'}}>
-                    <h2 style={{fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}}>Nuestros trabajos</h2>
+                    <h2 contentEditable suppressContentEditableWarning style={{...eBase,fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);editTitle('gallery',e.currentTarget.innerText.trim()||'Nuestros trabajos')}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{content.sectionTitles?.gallery??'Nuestros trabajos'}</h2>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:'0.875rem',maxWidth:'960px',margin:'0 auto'}}>
                       {gallery.map((url,i)=>{
                         const frame=content.theme?.galleryFrame??'rounded'
@@ -779,7 +843,7 @@ export default function SiteEditorClient({
                 {/* PRECIOS */}
                 {sections.precios&&(content.pricing??[]).length>0&&(
                   <div style={{padding:'3.5rem 2rem',background:dark?'#0d0d14':'white'}}>
-                    <h2 style={{fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}}>Precios</h2>
+                    <h2 contentEditable suppressContentEditableWarning style={{...eBase,fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);editTitle('pricing',e.currentTarget.innerText.trim()||'Precios')}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{content.sectionTitles?.pricing??'Precios'}</h2>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:'1rem',maxWidth:'960px',margin:'0 auto'}}>
                       {(content.pricing??[]).map((p,i)=>(
                         <div key={i} style={{background:dark?'rgba(255,255,255,0.04)':p.highlighted?`${color}08`:'#f9fafb',border:`${p.highlighted?2:1}px solid ${p.highlighted?color:brd}`,borderRadius:14,padding:'1.75rem 1.5rem',textAlign:'center',position:'relative'}}>
@@ -804,7 +868,7 @@ export default function SiteEditorClient({
                 {/* PROCESO */}
                 {sections.pasos&&(content.steps??[]).length>0&&(
                   <div style={{padding:'3.5rem 2rem',background:sectBg}}>
-                    <h2 style={{fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}}>¿Cómo funciona?</h2>
+                    <h2 contentEditable suppressContentEditableWarning style={{...eBase,fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);editTitle('steps',e.currentTarget.innerText.trim()||'¿Cómo funciona?')}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{content.sectionTitles?.steps??'¿Cómo funciona?'}</h2>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:'1.5rem',maxWidth:'860px',margin:'0 auto'}}>
                       {(content.steps??[]).map((s,i)=>(
                         <div key={i} style={{textAlign:'center',position:'relative'}}>
@@ -826,7 +890,7 @@ export default function SiteEditorClient({
                 {/* BENEFICIOS */}
                 {sections.beneficios&&(content.benefits??[]).length>0&&(
                   <div style={{padding:'3.5rem 2rem',background:dark?'rgba(255,255,255,0.02)':'#f9fafb'}}>
-                    <h2 style={{fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}}>¿Por qué elegirnos?</h2>
+                    <h2 contentEditable suppressContentEditableWarning style={{...eBase,fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);editTitle('benefits',e.currentTarget.innerText.trim()||'¿Por qué elegirnos?')}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{content.sectionTitles?.benefits??'¿Por qué elegirnos?'}</h2>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:'1.25rem',maxWidth:'960px',margin:'0 auto'}}>
                       {(content.benefits??[]).map((b,i)=>(
                         <div key={i} style={{background:dark?'rgba(255,255,255,0.04)':'white',border:`1px solid ${brd}`,borderRadius:14,padding:'1.5rem',display:'flex',gap:'1rem',position:'relative'}}>
@@ -846,7 +910,7 @@ export default function SiteEditorClient({
                 {/* FAQ */}
                 {sections.faq&&(content.faq??[]).length>0&&(
                   <div style={{padding:'3.5rem 2rem',background:sectBg}}>
-                    <h2 style={{fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}}>Preguntas frecuentes</h2>
+                    <h2 contentEditable suppressContentEditableWarning style={{...eBase,fontSize:'1.5rem',fontWeight:800,textAlign:'center',marginBottom:'2rem',color:navFg}} onFocus={onFocusEdit} onBlur={e=>{clearEdit(e.currentTarget);editTitle('faq',e.currentTarget.innerText.trim()||'Preguntas frecuentes')}} onMouseEnter={onHoverEdit} onMouseLeave={onLeaveHover}>{content.sectionTitles?.faq??'Preguntas frecuentes'}</h2>
                     <div style={{maxWidth:'720px',margin:'0 auto',display:'flex',flexDirection:'column',gap:'0.625rem'}}>
                       {(content.faq??[]).map((item,i)=>(
                         <div key={i} style={{border:`1px solid ${brd}`,borderRadius:12,overflow:'hidden'}}>

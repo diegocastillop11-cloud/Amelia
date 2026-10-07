@@ -31,11 +31,11 @@ export default async function ClientesPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {businesses.map((b: {
+          {(businesses as unknown as {
             id: string; name: string; category: string; slug: string
             is_published: boolean; primary_color: string | null; created_at: string
             owners: { full_name: string | null; email: string } | null
-          }) => (
+          }[]).map(b => (
             <Link key={b.id} href={`/admin/clientes/${b.id}`}
                   className="card card-hover flex items-center justify-between gap-4 p-5"
                   style={{ textDecoration: 'none' }}>

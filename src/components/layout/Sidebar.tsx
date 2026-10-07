@@ -6,7 +6,7 @@ import { PLAN_DEFAULTS, ModuleKey } from '@/lib/modules'
 
 const BASE_NAV: { href: string; icon: string; label: string; exact?: boolean; root?: string; moduleKey?: ModuleKey }[] = [
   { href: '/dashboard',                  icon: '⚡', label: 'Inicio',     exact: true  },
-  { href: '/dashboard/reservas',         icon: '📅', label: 'Reservas',   moduleKey: 'reservas' },
+  { href: '/dashboard/reservas',         icon: '📅', label: 'Agenda',     moduleKey: 'reservas' },
   { href: '/dashboard/clientes',         icon: '👥', label: 'Clientes',   moduleKey: 'clientes' },
   { href: '/dashboard/horarios',         icon: '🕐', label: 'Horarios',   moduleKey: 'horarios' },
   { href: '/dashboard/productos',        icon: '📦', label: 'Productos',  moduleKey: 'productos' },
@@ -14,6 +14,7 @@ const BASE_NAV: { href: string; icon: string; label: string; exact?: boolean; ro
   { href: '/dashboard/metricas',          icon: '📊', label: 'Métricas',      moduleKey: 'metricas' },
   { href: '/dashboard/asistente',        icon: '🤖', label: 'Asistente IA'  },
   { href: '/dashboard/marketing',        icon: '📣', label: 'Marketing IA'   },
+  { href: '/dashboard/whatsapp',         icon: '💬', label: 'WhatsApp Bot'   },
   { href: '/dashboard/recordatorios',    icon: '🔔', label: 'Recordatorios', moduleKey: 'recordatorios' },
   { href: '/dashboard/settings',         icon: '⚙️', label: 'Ajustes'   },
 ]

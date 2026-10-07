@@ -49,7 +49,6 @@ export async function POST(req: Request) {
     const campaign = await createCampaign(conn.access_token, conn.ad_account_id, {
       name,
       objective,
-      daily_budget: Math.round(Number(daily_budget) * 100), // USD → centavos
     })
     return NextResponse.json({ id: campaign.id })
   } catch (err) {

@@ -49,6 +49,16 @@ export interface SiteContent {
   steps?: { title: string; desc: string }[]
   faq?: { q: string; a: string }[]
   pricing?: { title: string; price?: string; desc: string; highlighted?: boolean }[]
+  sectionTitles?: {
+    services?: string
+    gallery?: string
+    pricing?: string
+    steps?: string
+    benefits?: string
+    faq?: string
+    reviews?: string
+    about?: string
+  }
   contact: {
     cta: string
     phone?: string
@@ -73,6 +83,12 @@ export interface SiteContent {
     galleryFrame?: 'rounded' | 'square' | 'circle' | 'shadow' | 'border' | 'polaroid'
     logoShape?: 'default' | 'rounded' | 'circle' | 'square'
     logoSize?: 'sm' | 'md' | 'lg' | 'xl'
+    animAurora?: boolean
+    animTypewriter?: boolean
+    animBorderBeam?: boolean
+    animScrollReveal?: boolean
+    animTerminal?: boolean
+    animNumber?: boolean
   }
 }
 

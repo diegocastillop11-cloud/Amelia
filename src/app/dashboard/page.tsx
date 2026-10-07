@@ -56,8 +56,43 @@ export default async function DashboardPage() {
 
   const plan = (license as { plan?: string } | null)?.plan ?? 'free'
 
+  const dashCss = `
+    @keyframes db-beam-spin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+    .db-beam{position:relative;overflow:hidden;z-index:0}
+    .db-beam::before{content:'';position:absolute;inset:0;width:220%;aspect-ratio:1;top:50%;left:50%;transform:translate(-50%,-50%);
+      background:conic-gradient(transparent 0deg,transparent 258deg,rgba(255,255,255,0.88) 288deg,rgba(255,255,255,0.45) 308deg,transparent 338deg);
+      animation:db-beam-spin 2.8s linear infinite;pointer-events:none;z-index:-1}
+    @keyframes db-shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+    .db-shimmer{background:linear-gradient(90deg,#818cf8,#a78bfa,#c4b5fd,#818cf8);background-size:220% auto;
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      animation:db-shimmer 3.5s linear infinite}
+    @keyframes db-aurora{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(4%,6%) scale(1.1)}}
+    .db-aurora-blob{position:absolute;border-radius:50%;filter:blur(55px);pointer-events:none;animation:db-aurora 9s ease-in-out infinite}
+    .db-card-content{position:relative;z-index:1}
+    .db-stat-card{transition:transform 0.2s cubic-bezier(0.22,1,0.36,1),box-shadow 0.2s,border-color 0.2s}
+    .db-stat-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(99,102,241,0.13) !important}
+    .db-count{display:inline-block}
+  `
+  const dashScript = `
+    (function(){
+      function run(){
+        document.querySelectorAll('.db-count').forEach(function(el){
+          var t=parseInt(el.getAttribute('data-target')||'0',10);
+          if(!t)return;
+          el.textContent='0';
+          var s=null,d=900;
+          function step(ts){if(!s)s=ts;var p=Math.min((ts-s)/d,1),e=1-Math.pow(1-p,3);el.textContent=Math.round(e*t);if(p<1)requestAnimationFrame(step)}
+          requestAnimationFrame(step);
+        });
+      }
+      document.readyState==='loading'?document.addEventListener('DOMContentLoaded',run):run();
+    })()
+  `
+
   return (
     <div className="p-8 max-w-4xl">
+      <style dangerouslySetInnerHTML={{ __html: dashCss }} />
+      <script dangerouslySetInnerHTML={{ __html: dashScript }} />
       <div className="mb-8">
         <p className="text-sm mb-0.5" style={{ color: 'var(--text-muted)' }}>Panel de control</p>
         <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -86,7 +121,13 @@ export default async function DashboardPage() {
         <div className="space-y-4">
 
           {/* ── Sitio card ── */}
-          <div className="card p-6">
+          <div className="card p-6" style={{ position: 'relative', overflow: 'hidden' }}>
+            {/* Aurora blob */}
+            <div className="db-aurora-blob" style={{
+              width: '55%', height: '160%', top: '-40%', right: '-8%',
+              background: `radial-gradient(${business.primary_color ?? '#6366f1'}22, transparent 70%)`,
+            }} />
+            <div className="db-card-content">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
@@ -126,7 +167,7 @@ export default async function DashboardPage() {
                 </Link>
                 <Link
                   href={`/dashboard/sitio/editor?id=${business.id}`}
-                  className="btn-primary text-sm py-2.5 px-5"
+                  className="btn-primary db-beam text-sm py-2.5 px-5"
                   style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -136,14 +177,15 @@ export default async function DashboardPage() {
                 </Link>
               </div>
             </div>
+            </div>
           </div>
 
           {/* ── Stats ── */}
           <div className="grid grid-cols-3 gap-3">
-            <Link href="/dashboard/reservas" className="card card-hover p-5" style={{ textDecoration: 'none' }}>
+            <Link href="/dashboard/reservas" className="card card-hover db-stat-card p-5" style={{ textDecoration: 'none' }}>
               <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Citas este mes</p>
               <p className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-                {citasMes ?? 0}
+                <span className="db-count" data-target={citasMes ?? 0} suppressHydrationWarning>{citasMes ?? 0}</span>
               </p>
               {(citasPendientes ?? 0) > 0 && (
                 <p className="text-xs mt-1" style={{ color: '#fcd34d' }}>
@@ -155,20 +197,20 @@ export default async function DashboardPage() {
               )}
             </Link>
 
-            <Link href="/dashboard/clientes" className="card card-hover p-5" style={{ textDecoration: 'none' }}>
+            <Link href="/dashboard/clientes" className="card card-hover db-stat-card p-5" style={{ textDecoration: 'none' }}>
               <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Clientes</p>
               <p className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-                {totalClientes ?? 0}
+                <span className="db-count" data-target={totalClientes ?? 0} suppressHydrationWarning>{totalClientes ?? 0}</span>
               </p>
               <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                 {(totalClientes ?? 0) === 0 ? 'Aún sin clientes' : 'Ver todos →'}
               </p>
             </Link>
 
-            <Link href="/dashboard/upgrade" className="card card-hover p-5" style={{ textDecoration: 'none' }}>
+            <Link href="/dashboard/upgrade" className="card card-hover db-stat-card p-5" style={{ textDecoration: 'none' }}>
               <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Plan actual</p>
-              <p className="text-2xl font-semibold capitalize"
-                 style={{ color: plan === 'free' ? 'var(--text-primary)' : 'var(--accent-light)' }}>
+              <p className={`text-2xl font-semibold capitalize${plan !== 'free' ? ' db-shimmer' : ''}`}
+                 style={{ color: plan === 'free' ? 'var(--text-primary)' : undefined }}>
                 {plan}
               </p>
               {plan === 'free' && (

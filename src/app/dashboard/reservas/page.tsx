@@ -21,7 +21,7 @@ export default async function ReservasPage() {
             {business.name}
           </p>
           <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Reservas
+            Agenda
           </h1>
         </div>
         <Link href="/dashboard/horarios" className="btn-ghost flex items-center gap-2">

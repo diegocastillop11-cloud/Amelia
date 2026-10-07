@@ -581,20 +581,36 @@ Dirección: Av. Vicuña Mackenna 1234, La Florida
                  }} />
           <div className="flex gap-2">
             {[
-              { label: '🏷 Logo', imgState: state.logo, ref: logoRef },
-              { label: '🖼 Portada', imgState: state.coverImage, ref: coverRef },
-              { label: `📸 Galería${state.galleryImages.length > 0 ? ` (${state.galleryImages.length})` : ''}`, imgState: null, ref: galleryRef },
+              { label: '🏷 Logo', imgState: state.logo, ref: logoRef, onClear: () => update({ logo: null }) },
+              { label: '🖼 Portada', imgState: state.coverImage, ref: coverRef, onClear: () => update({ coverImage: null }) },
             ].map(item => (
-              <button key={item.label} type="button" onClick={() => item.ref.current?.click()}
-                      className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all"
-                      style={{
-                        background: item.imgState ? 'rgba(99,102,241,0.1)' : 'var(--bg-elevated)',
-                        border: `1.5px dashed ${item.imgState ? 'var(--accent)' : 'var(--border)'}`,
-                        color: item.imgState ? 'var(--accent-light)' : 'var(--text-muted)',
-                      }}>
-                {item.label}
-              </button>
+              <div key={item.label} className="flex-1 flex gap-1">
+                <button type="button" onClick={() => item.ref.current?.click()}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all"
+                        style={{
+                          background: item.imgState ? 'rgba(99,102,241,0.1)' : 'var(--bg-elevated)',
+                          border: `1.5px dashed ${item.imgState ? 'var(--accent)' : 'var(--border)'}`,
+                          color: item.imgState ? 'var(--accent-light)' : 'var(--text-muted)',
+                        }}>
+                  {item.label}
+                </button>
+                {item.imgState && (
+                  <button type="button" onClick={item.onClear}
+                          className="py-2.5 px-2.5 rounded-xl text-xs font-medium transition-all"
+                          style={{ background: 'rgba(239,68,68,0.06)', border: '1.5px solid rgba(239,68,68,0.3)', color: '#f87171' }}
+                          title="Eliminar">✕</button>
+                )}
+              </div>
             ))}
+            <button type="button" onClick={() => galleryRef.current?.click()}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-medium transition-all"
+                    style={{
+                      background: state.galleryImages.length > 0 ? 'rgba(99,102,241,0.1)' : 'var(--bg-elevated)',
+                      border: `1.5px dashed ${state.galleryImages.length > 0 ? 'var(--accent)' : 'var(--border)'}`,
+                      color: state.galleryImages.length > 0 ? 'var(--accent-light)' : 'var(--text-muted)',
+                    }}>
+              {`📸 Galería${state.galleryImages.length > 0 ? ` (${state.galleryImages.length})` : ''}`}
+            </button>
           </div>
         </div>
       </div>

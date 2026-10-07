@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import jsPDF from 'jspdf'
 
 interface Booking {
   id: string; service_name: string; client_name: string
@@ -34,6 +35,7 @@ export default function ReservasClient({ businessId }: { businessId: string }) {
   const [loading,    setLoading]    = useState(true)
   const [view,       setView]       = useState<'lista'|'calendario'>('lista')
   const [filter,     setFilter]     = useState<'all'|'confirmed'|'completed'|'cancelled'>('all')
+  const [sortDesc,   setSortDesc]   = useState(true)
   const [selected,   setSelected]   = useState<Booking | null>(null)
   const [today]  = useState(() => new Date())
   const [month,      setMonth]      = useState(today.getMonth())
@@ -52,6 +54,118 @@ export default function ReservasClient({ businessId }: { businessId: string }) {
   const [savingNotes,setSavingNotes]= useState(false)
   const [notesSaved, setNotesSaved] = useState(false)
   const [historyNote,setHistoryNote]= useState('')
+
+  const downloadPDF = useCallback(() => {
+    if (!selected) return
+    const doc = new jsPDF()
+    const accent = [99, 102, 241] as [number, number, number]
+    const gray   = [120, 120, 130] as [number, number, number]
+
+    // Header
+    doc.setFillColor(...accent)
+    doc.rect(0, 0, 210, 18, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Reporte de cliente', 14, 12)
+
+    // Nombre + servicio
+    doc.setTextColor(30, 30, 40)
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.text(selected.client_name, 14, 32)
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...gray)
+    doc.text(`${selected.service_name}  ·  ${selected.booking_date}  ${selected.booking_time.slice(0,5)}`, 14, 40)
+
+    // Línea divisoria
+    doc.setDrawColor(220, 220, 230)
+    doc.line(14, 46, 196, 46)
+
+    // Info de contacto
+    let y = 55
+    const fields: [string, string][] = [
+      ['Teléfono', selected.client_phone ?? '—'],
+      ['Email',    selected.client_email ?? '—'],
+      ['Duración', `${selected.duration_min} min`],
+      ['Estado',   selected.status === 'confirmed' ? 'Confirmada'
+                 : selected.status === 'completed' ? 'Completada'
+                 : selected.status === 'cancelled' ? 'Cancelada' : 'No asistió'],
+    ]
+    fields.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.setTextColor(...gray)
+      doc.text(label, 14, y)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(30, 30, 40)
+      doc.text(value, 60, y)
+      y += 8
+    })
+
+    // Sección notas
+    const sections: [string, string][] = [
+      ['Notas del servicio',       editNotes],
+      ['Advertencias a considerar', editAllerg],
+      ['Preferencias',              editPref],
+    ]
+    y += 4
+    doc.setDrawColor(220, 220, 230)
+    doc.line(14, y, 196, y)
+    y += 8
+
+    sections.forEach(([title, value]) => {
+      if (!value.trim()) return
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.setTextColor(...accent)
+      doc.text(title, 14, y)
+      y += 6
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.setTextColor(50, 50, 60)
+      const lines = doc.splitTextToSize(value, 182)
+      doc.text(lines, 14, y)
+      y += lines.length * 5 + 6
+    })
+
+    // Historial
+    if (history.length > 0) {
+      y += 2
+      doc.setDrawColor(220, 220, 230)
+      doc.line(14, y, 196, y)
+      y += 8
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.setTextColor(...accent)
+      doc.text('Historial de visitas', 14, y)
+      y += 6
+      history.forEach(h => {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.setTextColor(30, 30, 40)
+        doc.text(`${h.service_date}  ${h.service_name}`, 14, y)
+        if (h.notes) {
+          y += 5
+          doc.setFont('helvetica', 'normal')
+          doc.setTextColor(...gray)
+          const ln = doc.splitTextToSize(h.notes, 182)
+          doc.text(ln, 14, y)
+          y += ln.length * 4
+        }
+        y += 6
+      })
+    }
+
+    // Footer
+    doc.setFont('helvetica', 'italic')
+    doc.setFontSize(8)
+    doc.setTextColor(...gray)
+    doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')}`, 14, 285)
+
+    doc.save(`reporte-${selected.client_name.replace(/\s+/g,'-').toLowerCase()}.pdf`)
+  }, [selected, editNotes, editAllerg, editPref, history])
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -152,7 +266,12 @@ export default function ReservasClient({ businessId }: { businessId: string }) {
     if (selected?.id === id) setSelected(prev => prev ? { ...prev, status: status as Booking['status'] } : null)
   }
 
-  const filtered = filter === 'all' ? bookings : bookings.filter(b => b.status === filter)
+  const filtered = (filter === 'all' ? bookings : bookings.filter(b => b.status === filter))
+    .slice()
+    .sort((a, b) => {
+      const cmp = (a.booking_date + a.booking_time).localeCompare(b.booking_date + b.booking_time)
+      return sortDesc ? -cmp : cmp
+    })
   const daysInMonth = new Date(year, month+1, 0).getDate()
   const firstDay    = new Date(year, month, 1).getDay()
   const calCells    = Array.from({ length: Math.ceil((firstDay+daysInMonth)/7)*7 }, (_,i) => {
@@ -223,6 +342,11 @@ export default function ReservasClient({ businessId }: { businessId: string }) {
             <option value="completed">Completadas</option>
             <option value="cancelled">Canceladas</option>
           </select>
+          <button onClick={()=>setSortDesc(p=>!p)}
+                  className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1"
+                  title={sortDesc ? 'Más reciente primero' : 'Más antigua primero'}>
+            {sortDesc ? '↓ Reciente' : '↑ Antigua'}
+          </button>
         </div>
       </div>
 
@@ -387,15 +511,15 @@ export default function ReservasClient({ businessId }: { businessId: string }) {
                         📝 Notas del servicio
                       </label>
                       <textarea value={editNotes} onChange={e=>setEditNotes(e.target.value)} rows={3}
-                                placeholder="Ej: Le encantó el corte clásico con tijera, prefiere sin máquina..."
+                                placeholder=""
                                 className="input-field resize-none text-sm w-full"/>
                     </div>
                     <div>
                       <label className="text-xs font-medium mb-1 block" style={{ color:'var(--text-muted)' }}>
-                        ⚠️ Alergias / condiciones
+                        ⚠️ Advertencias a considerar
                       </label>
                       <textarea value={editAllerg} onChange={e=>setEditAllerg(e.target.value)} rows={2}
-                                placeholder="Ej: Alérgico al amoniaco, psoriasis en cuero cabelludo..."
+                                placeholder=""
                                 className="input-field resize-none text-sm w-full"/>
                     </div>
                     <div>
@@ -403,13 +527,20 @@ export default function ReservasClient({ businessId }: { businessId: string }) {
                         💡 Preferencias
                       </label>
                       <textarea value={editPref} onChange={e=>setEditPref(e.target.value)} rows={2}
-                                placeholder="Ej: Le gusta la música clásica, no quiere hablar mucho..."
+                                placeholder=""
                                 className="input-field resize-none text-sm w-full"/>
                     </div>
-                    <button onClick={saveNotes} disabled={savingNotes}
-                            className="btn-primary text-sm py-2 w-full">
-                      {savingNotes ? 'Guardando...' : notesSaved ? '✓ Guardado' : '💾 Guardar notas'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button onClick={saveNotes} disabled={savingNotes}
+                              className="btn-primary text-sm py-2 flex-1">
+                        {savingNotes ? 'Guardando...' : notesSaved ? '✓ Guardado' : '💾 Guardar notas'}
+                      </button>
+                      <button onClick={downloadPDF}
+                              className="btn-ghost text-sm py-2 px-3"
+                              title="Descargar reporte PDF">
+                        ⬇ PDF
+                      </button>
+                    </div>
                   </div>
 
                   {/* Historial de visitas */}
@@ -435,7 +566,7 @@ export default function ReservasClient({ businessId }: { businessId: string }) {
                   {/* Agregar nota al historial */}
                   <div className="mt-3 flex gap-2">
                     <input value={historyNote} onChange={e=>setHistoryNote(e.target.value)}
-                           placeholder="Ej: Corte navaja lateral, muy contento..."
+                           placeholder=""
                            className="input-field text-sm flex-1 py-2"/>
                     <button onClick={addHistoryEntry} disabled={!historyNote.trim()}
                             className="btn-ghost text-sm py-2 px-3">+ Agregar</button>

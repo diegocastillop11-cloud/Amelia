@@ -10,7 +10,7 @@ export async function middleware(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: (name) => req.cookies.get(name)?.value,
+        get: (name: string) => req.cookies.get(name)?.value,
         set: () => {},
         remove: () => {},
       },

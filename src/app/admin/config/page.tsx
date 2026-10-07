@@ -27,7 +27,7 @@ export default async function ConfigPage() {
     const lic = licMap.get(b.id)
     const plan = lic?.plan ?? 'free'
     const modules = (lic?.modules ?? PLAN_DEFAULTS[plan]) as Record<ModuleKey, boolean>
-    const ownerData = b.owners as { email: string } | null
+    const ownerData = b.owners as unknown as { email: string } | null
     return {
       id: b.id,
       name: b.name,

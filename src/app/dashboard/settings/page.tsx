@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import ThemeSwitcher from '@/components/settings/ThemeSwitcher'
 
 export default async function SettingsPage() {
   const supabase = createClient()
@@ -60,6 +61,11 @@ export default async function SettingsPage() {
             </div>
           </section>
         )}
+
+        {/* Tema del panel */}
+        <section style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 16, padding: '1.25rem 1.5rem' }}>
+          <ThemeSwitcher />
+        </section>
 
         {/* Personalización visual */}
         <Link href="/dashboard/settings/personalizacion"

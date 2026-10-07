@@ -30,11 +30,13 @@ export async function POST(req: Request) {
   const {
     objective, daily_budget, age_min = 18, age_max = 55,
     saved_copy, saved_image_hash: _saved_hash, saved_image_url,
+    manual_image_hash,
   }: {
     objective: string; daily_budget: number; age_min?: number; age_max?: number
-    saved_copy?:       CopyData
-    saved_image_hash?: string
-    saved_image_url?:  string
+    saved_copy?:        CopyData
+    saved_image_hash?:  string
+    saved_image_url?:   string
+    manual_image_hash?: string   // imagen subida manualmente por el usuario
   } = await req.json()
 
   // mutable para poder asignarlo en el paso 3
@@ -135,20 +137,26 @@ Responde SOLO con JSON válido (sin markdown):
 
         // ── Paso 2: Generar imagen ────────────────────────────────────────────
         let imageUrl: string
-        if (resuming) {
+        if (manual_image_hash) {
+          // Imagen subida manualmente — saltar generación y upload
+          imageUrl = ''
+          send({ step: 'image',  label: 'Imagen manual ✓',      done: true, skipped: true })
+          send({ step: 'upload', label: 'Imagen lista en Meta ✓', done: true, skipped: true, imageHash: manual_image_hash })
+        } else if (resuming) {
           imageUrl = saved_image_url!
-          send({ step: 'image', label: 'Imagen reutilizada ✓', done: true, skipped: true, imageUrl })
+          send({ step: 'image',  label: 'Imagen reutilizada ✓', done: true, skipped: true, imageUrl })
+          send({ step: 'upload', label: 'Hash reutilizado ✓',   done: true, skipped: true, imageHash: saved_image_hash })
         } else {
           send({ step: 'image', label: 'Generando imagen con IA...' })
           let imageBuffer: ArrayBuffer
           try {
-            const img = await generateAdImage(copy.image_prompt)
-            imageUrl  = img.url
+            const img   = await generateAdImage(copy.image_prompt)
+            imageUrl    = img.url
             imageBuffer = img.buffer
           } catch (e) { throw new Error(`Paso 2 (imagen): ${String(e)}`) }
           send({ step: 'image', label: 'Imagen generada ✓', done: true, imageUrl })
 
-          // ── Paso 3: Subir imagen a Meta ─────────────────────────────────────
+          // ── Paso 3: Subir imagen a Meta ───────────────────────────────────
           send({ step: 'upload', label: 'Subiendo imagen a Meta...' })
           try {
             saved_image_hash = await uploadAdImage(conn.access_token, conn.ad_account_id!, imageBuffer)
@@ -156,12 +164,7 @@ Responde SOLO con JSON válido (sin markdown):
           send({ step: 'upload', label: 'Imagen lista en Meta ✓', done: true, imageHash: saved_image_hash })
         }
 
-        // ── Paso 3 (reutilizado) ──────────────────────────────────────────────
-        if (resuming) {
-          send({ step: 'upload', label: 'Hash reutilizado ✓', done: true, skipped: true, imageHash: saved_image_hash })
-        }
-
-        const imageHash = saved_image_hash!
+        const imageHash = (manual_image_hash ?? saved_image_hash)!
 
         // ── Paso 4: Crear campaña ─────────────────────────────────────────────
         send({ step: 'campaign', label: 'Creando campaña...' })

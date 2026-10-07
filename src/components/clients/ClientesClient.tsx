@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import jsPDF from 'jspdf'
 
 interface Client {
   id: string
@@ -74,6 +75,115 @@ export default function ClientesClient({
     setAllergies(profile?.allergies ?? '')
     setPreferences(profile?.preferences ?? '')
     setLoadingBookings(false)
+  }
+
+  const downloadPDF = () => {
+    if (!selected) return
+    const doc = new jsPDF()
+    const accent = [99, 102, 241] as [number, number, number]
+    const gray   = [120, 120, 130] as [number, number, number]
+
+    // Header
+    doc.setFillColor(...accent)
+    doc.rect(0, 0, 210, 18, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Reporte de cliente', 14, 12)
+
+    // Nombre
+    doc.setTextColor(30, 30, 40)
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.text(selected.name, 14, 32)
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...gray)
+    doc.text(selected.email, 14, 40)
+
+    // Línea divisoria
+    doc.setDrawColor(220, 220, 230)
+    doc.line(14, 46, 196, 46)
+
+    // Info de contacto
+    let y = 55
+    const fields: [string, string][] = [
+      ['Teléfono',      selected.phone ?? '—'],
+      ['Total visitas', String(selected.total_visits)],
+      ['Última visita', selected.last_visit ? formatDate(selected.last_visit) : '—'],
+    ]
+    fields.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.setTextColor(...gray)
+      doc.text(label, 14, y)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(30, 30, 40)
+      doc.text(value, 60, y)
+      y += 8
+    })
+
+    // Sección notas
+    const sections: [string, string][] = [
+      ['Notas del servicio',        notes],
+      ['Advertencias a considerar', allergies],
+      ['Preferencias',              preferences],
+    ]
+    y += 4
+    doc.setDrawColor(220, 220, 230)
+    doc.line(14, y, 196, y)
+    y += 8
+
+    sections.forEach(([title, value]) => {
+      if (!value.trim()) return
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.setTextColor(...accent)
+      doc.text(title, 14, y)
+      y += 6
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.setTextColor(50, 50, 60)
+      const lines = doc.splitTextToSize(value, 182)
+      doc.text(lines, 14, y)
+      y += lines.length * 5 + 6
+    })
+
+    // Historial
+    if (bookings.length > 0) {
+      y += 2
+      doc.setDrawColor(220, 220, 230)
+      doc.line(14, y, 196, y)
+      y += 8
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.setTextColor(...accent)
+      doc.text('Historial de citas', 14, y)
+      y += 6
+      bookings.forEach(b => {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.setTextColor(30, 30, 40)
+        doc.text(`${b.booking_date}  ${b.booking_time.slice(0,5)}  ${b.service_name}`, 14, y)
+        if (b.notes) {
+          y += 5
+          doc.setFont('helvetica', 'normal')
+          doc.setTextColor(...gray)
+          const ln = doc.splitTextToSize(b.notes, 182)
+          doc.text(ln, 14, y)
+          y += ln.length * 4
+        }
+        y += 6
+      })
+    }
+
+    // Footer
+    doc.setFont('helvetica', 'italic')
+    doc.setFontSize(8)
+    doc.setTextColor(...gray)
+    doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')}`, 14, 285)
+
+    doc.save(`reporte-${selected.name.replace(/\s+/g,'-').toLowerCase()}.pdf`)
   }
 
   const saveNotes = async () => {
@@ -207,11 +317,11 @@ export default function ClientesClient({
               </p>
               {[
                 { label: '📝 Notas del servicio', value: notes, set: setNotes,
-                  placeholder: 'Ej: prefiere tijera, sin máquina...' },
-                { label: '⚠️ Alergias / condiciones', value: allergies, set: setAllergies,
-                  placeholder: 'Ej: alérgico al amoniaco...' },
+                  placeholder: '' },
+                { label: '⚠️ Advertencias a considerar', value: allergies, set: setAllergies,
+                  placeholder: '' },
                 { label: '💡 Preferencias', value: preferences, set: setPreferences,
-                  placeholder: 'Ej: le gusta la música tranquila...' },
+                  placeholder: '' },
               ].map(({ label, value, set, placeholder }) => (
                 <div key={label}>
                   <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
@@ -220,10 +330,17 @@ export default function ClientesClient({
                             className="input-field resize-none text-xs w-full" />
                 </div>
               ))}
-              <button onClick={saveNotes} disabled={savingNotes}
-                      className="btn-primary w-full text-xs py-2">
-                {savingNotes ? 'Guardando...' : notesSaved ? '✓ Guardado' : '💾 Guardar notas'}
-              </button>
+              <div className="flex gap-2">
+                <button onClick={saveNotes} disabled={savingNotes}
+                        className="btn-primary flex-1 text-xs py-2">
+                  {savingNotes ? 'Guardando...' : notesSaved ? '✓ Guardado' : '💾 Guardar notas'}
+                </button>
+                <button onClick={downloadPDF}
+                        className="btn-ghost text-xs py-2 px-3"
+                        title="Descargar reporte PDF">
+                  ⬇ PDF
+                </button>
+              </div>
             </div>
 
             {/* Historial */}

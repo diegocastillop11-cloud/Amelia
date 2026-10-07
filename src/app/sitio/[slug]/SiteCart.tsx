@@ -32,8 +32,6 @@ export default function SiteCart({ slug, color, deliverySettings }: Props) {
   const [street,       setStreet]       = useState('')
   const [commune,      setCommune]      = useState('')
   const [region,       setRegion]       = useState('')
-  const [regionOpen,   setRegionOpen]   = useState(false)
-  const regionRef = useRef<HTMLDivElement>(null)
   const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo | null>(null)
   const [calcLoading,  setCalcLoading]  = useState(false)
   const [calcErr,      setCalcErr]      = useState('')
@@ -52,13 +50,6 @@ export default function SiteCart({ slug, color, deliverySettings }: Props) {
     return () => window.removeEventListener('amelia-cart-update', handler)
   }, [slug])
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (regionRef.current && !regionRef.current.contains(e.target as Node)) setRegionOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
 
   const productTotal = cart.reduce((s, i) => s + (i.promo_price ?? i.price) * i.qty, 0)
   const deliveryCost = deliveryType === 'delivery' ? (deliveryInfo?.cost ?? 0) : 0
@@ -314,41 +305,18 @@ export default function SiteCart({ slug, color, deliverySettings }: Props) {
                       </div>
                       {/* Región + botón */}
                       <div style={{ display:'flex', gap:8, marginBottom:8 }}>
-                        <div style={{ flex:1, position:'relative' }} ref={regionRef}>
+                        <div style={{ flex:1 }}>
                           <label style={{ ...labelStyle, marginBottom:4 }}>Región</label>
-                          <button type="button" onClick={()=>setRegionOpen(o=>!o)}
-                            style={{ ...inputStyle, display:'flex', justifyContent:'space-between',
-                                      alignItems:'center', cursor:'pointer', textAlign:'left' }}>
-                            <span style={{ color: region ? fg : 'rgba(255,255,255,0.25)' }}>
-                              {region || 'Selecciona región'}
-                            </span>
-                            <span style={{ fontSize:10, color:muted, marginLeft:6 }}>{regionOpen ? '▲' : '▼'}</span>
-                          </button>
-                          {regionOpen && (
-                            <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, right:0,
-                                           background:'#1e1e2e', border:`1.5px solid ${color}55`,
-                                           borderRadius:8, zIndex:100, overflow:'hidden',
-                                           boxShadow:'0 8px 24px rgba(0,0,0,0.5)' }}>
-                              <div style={{ maxHeight:180, overflowY:'auto',
-                                             scrollbarWidth:'thin',
-                                             scrollbarColor:`${color} rgba(255,255,255,0.06)` }}>
-                                {REGIONS.map(r => (
-                                  <button key={r} type="button"
-                                    onClick={()=>{ setRegion(r); setDeliveryInfo(null); setRegionOpen(false) }}
-                                    style={{ width:'100%', padding:'9px 12px', background: r===region ? `${color}30` : 'transparent',
-                                              color: r===region ? fg : muted, fontFamily:'inherit',
-                                              fontSize:13, fontWeight: r===region ? 700 : 400,
-                                              border:'none', cursor:'pointer', textAlign:'left',
-                                              borderBottom:`1px solid rgba(255,255,255,0.05)`,
-                                              transition:'background 0.1s' }}
-                                    onMouseOver={e=>(e.currentTarget.style.background=r===region?`${color}30`:'rgba(255,255,255,0.06)')}
-                                    onMouseOut={e=>(e.currentTarget.style.background=r===region?`${color}30`:'transparent')}>
-                                    {r}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                          <input
+                            list="regions-list"
+                            value={region}
+                            onChange={e=>{ setRegion(e.target.value); setDeliveryInfo(null) }}
+                            placeholder="Escribe o elige tu región"
+                            style={{ ...inputStyle }}
+                          />
+                          <datalist id="regions-list">
+                            {REGIONS.map(r => <option key={r} value={r} />)}
+                          </datalist>
                         </div>
                         <div style={{ display:'flex', alignItems:'flex-end' }}>
                           <button type="button" onClick={calcDelivery}

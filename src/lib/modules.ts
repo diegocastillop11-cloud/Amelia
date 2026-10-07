@@ -1,5 +1,5 @@
 export const MODULES_CONFIG = [
-  { key: 'reservas',      label: 'Reservas',        icon: '📅' },
+  { key: 'reservas',      label: 'Agenda',          icon: '📅' },
   { key: 'clientes',      label: 'Clientes',         icon: '👥' },
   { key: 'productos',     label: 'Productos',        icon: '📦' },
   { key: 'horarios',      label: 'Horarios',         icon: '🕐' },
