@@ -69,28 +69,27 @@ export default function AdminSidebar() {
   }
 
   return (
-    <aside className="w-56 flex flex-col shrink-0"
-           style={{ background: 'var(--bg-surface)', borderRight: '1px solid var(--border)' }}>
+    <aside className="sb w-56 flex flex-col shrink-0">
 
       {/* Logo */}
-      <div className="p-5" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="p-5" style={{ borderBottom: '1px solid var(--sb-border)' }}>
         <div className="flex items-center gap-2.5">
           <AmeliaAvatar size={28} style={{ borderRadius: 8, boxShadow: '0 2px 12px color-mix(in srgb, var(--accent-light) 40%, transparent)' }} />
           <div>
-            <p className="font-semibold text-sm leading-tight" style={{ color: 'var(--text-primary)' }}>Amelia</p>
-            <p className="text-xs font-bold leading-tight" style={{ color: '#a78bfa', letterSpacing: '0.05em' }}>SUPERADMIN</p>
+            <p className="font-semibold text-sm leading-tight" style={{ color: 'var(--sb-title)' }}>Amelia</p>
+            <p className="text-xs font-bold leading-tight" style={{ color: 'var(--sb-muted)', letterSpacing: '0.05em' }}>SUPERADMIN</p>
           </div>
         </div>
       </div>
 
       {/* Switcher admin ↔ owner */}
-      <div className="p-3" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex rounded-lg overflow-hidden" style={{ background: 'var(--bg-elevated)' }}>
+      <div className="p-3" style={{ borderBottom: '1px solid var(--sb-border)' }}>
+        <div className="flex rounded-lg overflow-hidden" style={{ background: 'var(--sb-card)' }}>
           <Link href="/admin"
                 className="flex-1 text-center py-1.5 text-xs font-semibold transition-all"
                 style={{
-                  background: !isInDashboard ? 'color-mix(in srgb, var(--accent-light) 30%, transparent)' : 'transparent',
-                  color: !isInDashboard ? '#c4b5fd' : 'var(--text-muted)',
+                  background: !isInDashboard ? 'var(--sb-active-bg)' : 'transparent',
+                  color: !isInDashboard ? 'var(--sb-active-text)' : 'var(--sb-muted)',
                   borderRadius: '6px',
                   margin: '2px',
                 }}>
@@ -99,8 +98,8 @@ export default function AdminSidebar() {
           <Link href="/dashboard"
                 className="flex-1 text-center py-1.5 text-xs font-semibold transition-all"
                 style={{
-                  background: isInDashboard ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'transparent',
-                  color: isInDashboard ? 'var(--accent-light)' : 'var(--text-muted)',
+                  background: isInDashboard ? 'var(--sb-active-bg)' : 'transparent',
+                  color: isInDashboard ? 'var(--sb-active-text)' : 'var(--sb-muted)',
                   borderRadius: '6px',
                   margin: '2px',
                 }}>
@@ -108,7 +107,7 @@ export default function AdminSidebar() {
           </Link>
         </div>
         {isInDashboard && (
-          <p className="text-center text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-center text-xs mt-1.5" style={{ color: 'var(--sb-muted)' }}>
             Modo prueba · Vista de cliente
           </p>
         )}
@@ -136,7 +135,7 @@ export default function AdminSidebar() {
       </nav>
 
       {/* User + logout */}
-      <div className="p-3" style={{ borderTop: '1px solid var(--border)' }}>
+      <div className="p-3" style={{ borderTop: '1px solid var(--sb-border)' }}>
         <button onClick={handleLogout} className="nav-item">
           <Icon path="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
           Cerrar sesión

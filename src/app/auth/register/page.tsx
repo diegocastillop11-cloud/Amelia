@@ -34,7 +34,7 @@ export default function RegisterPage() {
     <div className="text-center mb-8">
       <div className="inline-flex items-center gap-2.5 mb-5">
         <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-sm"
-             style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-light))', boxShadow: '0 4px 20px color-mix(in srgb, var(--accent) 40%, transparent)' }}>
+             style={{ background: 'var(--brand-grad)', boxShadow: '0 4px 20px color-mix(in srgb, var(--accent) 40%, transparent)' }}>
           A
         </div>
         <span className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Amelia</span>
@@ -53,7 +53,7 @@ export default function RegisterPage() {
           {/* Check */}
           <div className="flex justify-center mb-5">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                 style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-light))', boxShadow: '0 8px 32px color-mix(in srgb, var(--accent) 50%, transparent)' }}>
+                 style={{ background: 'var(--brand-grad)', boxShadow: '0 8px 32px color-mix(in srgb, var(--accent) 50%, transparent)' }}>
               <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.5 12.75l6 6 9-13.5" />
               </svg>

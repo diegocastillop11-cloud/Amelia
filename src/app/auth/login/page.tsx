@@ -36,7 +36,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2.5 mb-5">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-sm shadow-lg"
-                 style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-light))', boxShadow: '0 4px 20px color-mix(in srgb, var(--accent) 40%, transparent)' }}>
+                 style={{ background: 'var(--brand-grad)', boxShadow: '0 4px 20px color-mix(in srgb, var(--accent) 40%, transparent)' }}>
               A
             </div>
             <span className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Amelia</span>

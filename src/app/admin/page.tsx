@@ -28,24 +28,25 @@ export default async function AdminPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <p className="text-sm mb-1" style={{ color: 'var(--text-muted)' }}>Panel de control</p>
-        <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Dashboard Admin</h1>
-        <p className="text-xs mono mt-1" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
+      <div className="card-accent mb-8 p-7">
+        <p className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.8)' }}>Panel de control</p>
+        <h1 className="text-3xl font-bold" style={{ color: '#fff' }}>Dashboard Admin</h1>
+        <p className="text-xs mono mt-2" style={{ color: 'rgba(255,255,255,0.75)' }}>{user?.email}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map(s => (
-          <div key={s.label} className="card p-5"
-               style={{ borderTop: `3px solid ${s.color}` }}>
+          <div key={s.label} className="card card-hover p-5"
+               style={{ background: `linear-gradient(135deg, ${s.color}, ${s.color}cc)`, borderColor: 'transparent',
+                        boxShadow: `0 8px 20px ${s.color}44` }}>
             <div className="flex items-center justify-between mb-3">
               <span className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                    style={{ background: `${s.color}22` }}>{s.icon}</span>
-              {s.alert && <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#e67e22' }} />}
+                    style={{ background: 'rgba(255,255,255,0.25)' }}>{s.icon}</span>
+              {s.alert && <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: '#fff' }} />}
             </div>
-            <p className="text-3xl font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>{s.value}</p>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
+            <p className="text-3xl font-bold mb-1" style={{ color: '#fff' }}>{s.value}</p>
+            <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.88)' }}>{s.label}</p>
           </div>
         ))}
       </div>
