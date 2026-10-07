@@ -64,9 +64,9 @@ const TEMPLATES: {id: TemplateId; label: string; badge?: string}[] = [
   {id:'cosmic',label:'Cosmic',badge:'nuevo'},{id:'retro',label:'Retro',badge:'nuevo'},
 ]
 const SECTIONS_LIST = [
-  {key:'hero',label:'Hero'},{key:'nosotros',label:'Nosotros'},{key:'servicios',label:'Servicios'},
-  {key:'precios',label:'Precios'},{key:'pasos',label:'Proceso'},{key:'beneficios',label:'Beneficios'},
-  {key:'resenas',label:'Reseñas'},{key:'faq',label:'FAQ'},
+  {key:'hero',label:'Portada'},{key:'nosotros',label:'Nosotros'},{key:'servicios',label:'Servicios'},
+  {key:'precios',label:'Precios'},{key:'pasos',label:'Cómo funciona'},{key:'beneficios',label:'Beneficios'},
+  {key:'resenas',label:'Reseñas'},{key:'faq',label:'Preguntas frecuentes'},
   {key:'galeria',label:'Galería'},{key:'contacto',label:'Contacto'},
 ]
 
@@ -370,10 +370,10 @@ export default function SiteEditorClient({
           disabled={saveState==='saving'||saveState==='saved'}
           style={{background:saveState==='unsaved'?'rgba(16,185,129,0.15)':'rgba(255,255,255,0.05)',color:saveState==='unsaved'?'#6ee7b7':'#4b4b6b',border:`1px solid ${saveState==='unsaved'?'rgba(16,185,129,0.3)':'rgba(255,255,255,0.08)'}`,padding:'6px 14px',borderRadius:8,fontSize:12,fontWeight:700,cursor:saveState==='unsaved'?'pointer':'default',fontFamily:'Inter,sans-serif',transition:'all 0.2s'}}
         >
-          {saveState==='saving'?'⟳ Guardando...':'💾 Guardar'}
+          {saveState==='saving'?'⟳ Guardando...':'💾 Guardar cambios'}
         </button>
         <button onClick={publish} disabled={publishing} style={{background:'linear-gradient(135deg,#6366f1,#8b5cf6)',color:'white',border:'none',padding:'6px 16px',borderRadius:8,fontSize:12,fontWeight:700,cursor:publishing?'not-allowed':'pointer',opacity:publishing?0.6:1,fontFamily:'Inter,sans-serif',boxShadow:'0 2px 12px rgba(99,102,241,0.4)'}}>
-          {publishing?'Publicando...':published?'✓ Republicar':'🚀 Publicar sitio'}
+          {publishing?'Publicando...':published?'✓ Publicar cambios':'🚀 Publicar mi sitio'}
         </button>
       </div>
 
@@ -383,8 +383,8 @@ export default function SiteEditorClient({
         <div style={{width:210,background:'#0f0f1a',borderRight:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           <div style={{display:'flex',padding:'8px 8px 0',gap:2,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
             {(['plantilla','secciones','acciones'] as const).map(p=>(
-              <button key={p} onClick={()=>setPanel(p)} style={{flex:1,padding:'6px 2px',border:'none',cursor:'pointer',fontSize:10,fontWeight:700,borderRadius:'6px 6px 0 0',fontFamily:'Inter,sans-serif',textTransform:'capitalize',background:panel===p?'rgba(99,102,241,0.15)':'transparent',color:panel===p?'#a5b4fc':'#3d3d5c',borderBottom:panel===p?'2px solid #6366f1':'2px solid transparent'}}>
-                {p.charAt(0).toUpperCase()+p.slice(1)}
+              <button key={p} onClick={()=>setPanel(p)} style={{flex:1,padding:'6px 2px',border:'none',cursor:'pointer',fontSize:12,fontWeight:700,borderRadius:'6px 6px 0 0',fontFamily:'Inter,sans-serif',textTransform:'capitalize',background:panel===p?'rgba(99,102,241,0.15)':'transparent',color:panel===p?'#a5b4fc':'#3d3d5c',borderBottom:panel===p?'2px solid #6366f1':'2px solid transparent'}}>
+                {({plantilla:'Estilo',secciones:'Qué mostrar',acciones:'Otras acciones'} as const)[p]}
               </button>
             ))}
           </div>
@@ -399,7 +399,7 @@ export default function SiteEditorClient({
                          style={{width:'100%',background:'rgba(255,255,255,0.04)',border:'1.5px solid rgba(255,255,255,0.08)',borderRadius:8,color:'#e2e8f0',fontSize:12,padding:'7px 10px',outline:'none',fontFamily:'Inter,sans-serif'}}/>
                 </div>
                 <div>
-                  <p style={S}>Plantilla</p>
+                  <p style={S}>Estilo del sitio</p>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
                     {TEMPLATES.map(t=>{
                       const previewBg = t.id==='dark'?'#0a0a0f':t.id==='neon'?'#05000f':t.id==='cosmic'?'#03030e':t.id==='glass3d'?'linear-gradient(135deg,#0b0f1a,#130d2e)':t.id==='bold'?'#111827':t.id==='glass'?'#0f172a':t.id==='vibrante'||t.id==='sunset'?`linear-gradient(135deg,${color},${color}bb)`:t.id==='elegante'?'#faf9f7':t.id==='retro'?'#fffef5':'white'
@@ -416,7 +416,7 @@ export default function SiteEditorClient({
                   </div>
                 </div>
                 <div>
-                  <p style={S}>Paleta de color</p>
+                  <p style={S}>Color principal</p>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5,marginBottom:8}}>
                     {([
                       {id:'oceano',  label:'🌊 Océano',  color:'#0284c7', bg:'#f0f7ff'},
@@ -436,7 +436,7 @@ export default function SiteEditorClient({
                       </button>
                     ))}
                   </div>
-                  <p style={{...S,marginBottom:4}}>Color personalizado</p>
+                  <p style={{...S,marginBottom:4}}>Elegir otro color</p>
                   <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
                     {COLORS.map(c=><button key={c} onClick={()=>setCol(c)} style={{width:24,height:24,borderRadius:6,background:c,border:'none',cursor:'pointer',outline:color===c?'3px solid white':'none',outlineOffset:1,transform:color===c?'scale(1.2)':'scale(1)',transition:'all 0.15s',boxShadow:color===c?`0 0 10px ${c}88`:'none'}}/>)}
                   </div>
@@ -474,7 +474,7 @@ export default function SiteEditorClient({
                   {colorT&&<button onClick={()=>{setColorT('');sched(content,name,color,template)}} style={{fontSize:9,color:'#4b4b6b',background:'none',border:'none',cursor:'pointer',padding:0}}>↩ Auto</button>}
                 </div>
                 <div>
-                  <p style={S}>Fuente tipográfica</p>
+                  <p style={S}>Tipo de letra</p>
                   <div style={{position:'relative'}}>
                     <button onClick={()=>setFontOpen(!fontOpen)} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,cursor:'pointer',background:'rgba(255,255,255,0.04)',border:`1.5px solid ${fontOpen?'rgba(99,102,241,0.45)':'rgba(255,255,255,0.08)'}`,fontFamily:'Inter,sans-serif'}}>
                       <span style={{fontSize:12,color:'#e2e8f0',fontFamily:font.family}}>{font.label}</span>
@@ -632,7 +632,7 @@ export default function SiteEditorClient({
 
                 {/* Menú de navegación */}
                 <div style={{borderTop:'1px solid rgba(255,255,255,0.06)',paddingTop:10}}>
-                  <p style={S}>Menú de navegación</p>
+                  <p style={S}>Menú superior</p>
                   <p style={{fontSize:9,color:'#3d3d5c',marginBottom:8}}>Edita el nombre de cada link o desactívalo</p>
                   {(() => {
                     const defaultNav = [
@@ -976,7 +976,7 @@ export default function SiteEditorClient({
             </div>
           </div>
           <div style={{padding:'6px 16px',background:'#0f0f1a',borderTop:'1px solid rgba(255,255,255,0.06)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-            <span style={{fontSize:10,color:'#3d3d5c'}}>Plantilla: <span style={{color:'#a5b4fc'}}>{TEMPLATES.find(t=>t.id===template)?.label}</span>{' · '}<span style={{color:'#a5b4fc',fontFamily:font.family}}>{font.label}</span></span>
+            <span style={{fontSize:10,color:'#3d3d5c'}}>Estilo: <span style={{color:'#a5b4fc'}}>{TEMPLATES.find(t=>t.id===template)?.label}</span>{' · '}<span style={{color:'#a5b4fc',fontFamily:font.family}}>{font.label}</span></span>
             <span style={{fontSize:10,color:'#3d3d5c',fontFamily:'JetBrains Mono,monospace'}}>amelia.app/sitio/{businessSlug}</span>
           </div>
         </div>

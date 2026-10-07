@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import PrimerosPasos from '@/components/dashboard/PrimerosPasos'
 
 export default async function DashboardPage() {
   const supabase = createClient()
@@ -100,14 +101,23 @@ export default async function DashboardPage() {
         </h1>
       </div>
 
+      <PrimerosPasos
+        enlace={business?.is_published && business.slug ? `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/sitio/${business.slug}` : null}
+        pasos={[
+          { titulo: 'Crea tu sitio web', detalle: 'Cuéntanos de tu negocio y lo armamos por ti en segundos.', hecho: hasValidSite, href: '/dashboard/sitio', boton: 'Crear mi sitio' },
+          { titulo: 'Revisa tus servicios y precios', detalle: 'Cambia los textos y pon tus precios reales.', hecho: !!((site?.content as { services?: { price?: string }[] } | undefined)?.services ?? []).some(sv => sv.price && sv.price !== '$0'), href: '/dashboard/sitio/editor', boton: 'Revisar mi sitio' },
+          { titulo: 'Publica tu sitio', detalle: 'Así tus clientes pueden verlo en internet.', hecho: !!business?.is_published, href: '/dashboard/sitio/editor', boton: 'Publicar mi sitio' },
+        ]}
+      />
+
       {!business || !hasValidSite ? (
         <div className="space-y-4">
           <div className="relative rounded-2xl overflow-hidden p-8" style={{
-            background: 'linear-gradient(135deg, #1e1b4b 0%, #2d2a5e 50%, #1e1b4b 100%)',
-            border: '1px solid rgba(99,102,241,0.3)',
+            background: 'var(--hero-bg)',
+            border: 'none',
           }}>
             <h2 className="text-xl font-semibold text-white mb-2">Genera tu sitio web con IA</h2>
-            <p className="text-sm mb-5" style={{ color: 'rgba(165,180,252,0.75)' }}>
+            <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.85)' }}>
               Describe tu negocio y nuestra IA crea todo el contenido en segundos.
             </p>
             <Link href="/dashboard/sitio"
