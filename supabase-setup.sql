@@ -56,7 +56,6 @@ CREATE TABLE IF NOT EXISTS public.businesses (
   slug TEXT UNIQUE NOT NULL,
   category TEXT,
   description TEXT,
-  description TEXT,
   primary_color TEXT DEFAULT '#0ea5e9',
   logo_url TEXT,
   cover_url TEXT,
@@ -144,28 +143,6 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Owners gestionan sus productos"
   ON public.products FOR ALL
-  USING (
-    auth.uid() = (
-      SELECT owner_id FROM public.businesses WHERE id = business_id
-    )
-  );
-
--- 7. BOOKINGS
-CREATE TABLE IF NOT EXISTS public.bookings (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES public.businesses(id) ON DELETE CASCADE NOT NULL,
-  customer_name TEXT NOT NULL,
-  customer_email TEXT NOT NULL,
-  service TEXT NOT NULL,
-  date TIMESTAMPTZ NOT NULL,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Owners gestionan sus reservas"
-  ON public.bookings FOR ALL
   USING (
     auth.uid() = (
       SELECT owner_id FROM public.businesses WHERE id = business_id
