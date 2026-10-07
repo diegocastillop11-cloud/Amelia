@@ -43,7 +43,7 @@ export default function Sidebar({ userEmail, plan = 'free', modules, hasSite = f
       {/* Logo */}
       <div style={{ padding: '1.5rem 1.25rem 1rem', borderBottom: '1px solid var(--border)' }}>
         <span style={{ fontSize: '1.25rem', fontWeight: 800,
-                        background: 'linear-gradient(135deg, #a5b4fc, #8b5cf6)',
+                        background: 'linear-gradient(135deg, var(--accent), var(--accent-light))',
                         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Amelia
         </span>
@@ -66,7 +66,7 @@ export default function Sidebar({ userEmail, plan = 'free', modules, hasSite = f
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '0.625rem 0.875rem', borderRadius: 10,
                     textDecoration: 'none', transition: 'all 0.15s',
-                    background: active ? 'rgba(99,102,241,0.12)' : 'transparent',
+                    background: active ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
                     color: locked ? 'var(--text-muted)' : active ? 'var(--accent-light)' : 'var(--text-secondary)',
                     fontWeight: active ? 600 : 400, fontSize: '0.875rem',
                     borderLeft: active ? '2px solid var(--accent)' : '2px solid transparent',
@@ -84,8 +84,8 @@ export default function Sidebar({ userEmail, plan = 'free', modules, hasSite = f
 
       {/* Upgrade banner */}
       <div style={{ padding: '0.875rem', margin: '0 0.75rem 0.875rem',
-                     background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))',
-                     border: '1px solid rgba(99,102,241,0.2)', borderRadius: 12 }}>
+                     background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent-light) 8%, transparent))',
+                     border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)', borderRadius: 12 }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-light)', marginBottom: 4, textTransform: 'capitalize' }}>
           Plan {plan}
         </p>
@@ -95,9 +95,9 @@ export default function Sidebar({ userEmail, plan = 'free', modules, hasSite = f
         {plan !== 'premium' && (
           <Link href="/dashboard/upgrade"
                 style={{ display: 'block', textAlign: 'center', padding: '0.5rem',
-                          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white',
+                          background: 'linear-gradient(135deg, var(--accent), var(--accent-light))', color: 'white',
                           borderRadius: 8, fontSize: '0.75rem', fontWeight: 700, textDecoration: 'none',
-                          boxShadow: '0 4px 12px rgba(99,102,241,0.35)' }}>
+                          boxShadow: '0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent)' }}>
             {plan === 'free' ? 'Mejorar a Pro →' : 'Mejorar a Premium →'}
           </Link>
         )}

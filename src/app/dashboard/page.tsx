@@ -112,7 +112,7 @@ export default async function DashboardPage() {
             </p>
             <Link href="/dashboard/sitio"
                   className="btn-primary inline-flex items-center gap-2"
-                  style={{ background: 'white', color: '#4f46e5', textDecoration: 'none' }}>
+                  style={{ background: 'white', color: 'var(--accent-light)', textDecoration: 'none' }}>
               ⚡ Crear mi sitio ahora
             </Link>
           </div>

@@ -20,10 +20,10 @@ export default async function AdminPage() {
   const pending = upgradeCount ?? 0
 
   const stats = [
-    { label: 'Negocios', value: totalBusinesses ?? 0, icon: '🏪' },
-    { label: 'Publicados', value: publishedSites ?? 0, icon: '🌐' },
-    { label: 'Usuarios', value: totalOwners ?? 0, icon: '👥' },
-    { label: 'Upgrades pendientes', value: pending, icon: '🔔', alert: pending > 0 },
+    { label: 'Negocios', value: totalBusinesses ?? 0, icon: '🏪', color: '#3498db' },
+    { label: 'Publicados', value: publishedSites ?? 0, icon: '🌐', color: '#2ecc71' },
+    { label: 'Usuarios', value: totalOwners ?? 0, icon: '👥', color: '#9b59b6' },
+    { label: 'Upgrades pendientes', value: pending, icon: '🔔', color: '#e67e22', alert: pending > 0 },
   ]
 
   return (
@@ -38,10 +38,11 @@ export default async function AdminPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map(s => (
           <div key={s.label} className="card p-5"
-               style={s.alert ? { borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.05)' } : {}}>
+               style={{ borderTop: `3px solid ${s.color}` }}>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xl">{s.icon}</span>
-              {s.alert && <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#f59e0b' }} />}
+              <span className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                    style={{ background: `${s.color}22` }}>{s.icon}</span>
+              {s.alert && <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#e67e22' }} />}
             </div>
             <p className="text-3xl font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>{s.value}</p>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
@@ -63,7 +64,7 @@ export default async function AdminPage() {
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Clientes que quieren cambiar de plan</p>
             </div>
           </div>
-          <Link href="/admin/upgrades" className="btn-ghost" style={{ color: '#fcd34d', borderColor: 'rgba(245,158,11,0.3)' }}>
+          <Link href="/admin/upgrades" className="btn-ghost" style={{ color: 'var(--warn-text)', borderColor: 'rgba(245,158,11,0.3)' }}>
             Revisar →
           </Link>
         </div>

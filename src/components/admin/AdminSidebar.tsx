@@ -75,7 +75,7 @@ export default function AdminSidebar() {
       {/* Logo */}
       <div className="p-5" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center gap-2.5">
-          <AmeliaAvatar size={28} style={{ borderRadius: 8, boxShadow: '0 2px 12px rgba(139,92,246,0.4)' }} />
+          <AmeliaAvatar size={28} style={{ borderRadius: 8, boxShadow: '0 2px 12px color-mix(in srgb, var(--accent-light) 40%, transparent)' }} />
           <div>
             <p className="font-semibold text-sm leading-tight" style={{ color: 'var(--text-primary)' }}>Amelia</p>
             <p className="text-xs font-bold leading-tight" style={{ color: '#a78bfa', letterSpacing: '0.05em' }}>SUPERADMIN</p>
@@ -89,7 +89,7 @@ export default function AdminSidebar() {
           <Link href="/admin"
                 className="flex-1 text-center py-1.5 text-xs font-semibold transition-all"
                 style={{
-                  background: !isInDashboard ? 'rgba(139,92,246,0.3)' : 'transparent',
+                  background: !isInDashboard ? 'color-mix(in srgb, var(--accent-light) 30%, transparent)' : 'transparent',
                   color: !isInDashboard ? '#c4b5fd' : 'var(--text-muted)',
                   borderRadius: '6px',
                   margin: '2px',
@@ -99,7 +99,7 @@ export default function AdminSidebar() {
           <Link href="/dashboard"
                 className="flex-1 text-center py-1.5 text-xs font-semibold transition-all"
                 style={{
-                  background: isInDashboard ? 'rgba(99,102,241,0.3)' : 'transparent',
+                  background: isInDashboard ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'transparent',
                   color: isInDashboard ? 'var(--accent-light)' : 'var(--text-muted)',
                   borderRadius: '6px',
                   margin: '2px',

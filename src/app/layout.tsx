@@ -18,7 +18,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){
             var t = localStorage.getItem('amelia-theme');
-            if (t && t !== 'dark') document.documentElement.setAttribute('data-theme', t);
+            if (t && t !== 'flat') document.documentElement.setAttribute('data-theme', t);
           })();
         `}} />
       </head>

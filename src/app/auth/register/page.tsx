@@ -34,7 +34,7 @@ export default function RegisterPage() {
     <div className="text-center mb-8">
       <div className="inline-flex items-center gap-2.5 mb-5">
         <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-sm"
-             style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', boxShadow: '0 4px 20px rgba(99,102,241,0.4)' }}>
+             style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-light))', boxShadow: '0 4px 20px color-mix(in srgb, var(--accent) 40%, transparent)' }}>
           A
         </div>
         <span className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Amelia</span>
@@ -46,14 +46,14 @@ export default function RegisterPage() {
     <div className="min-h-screen dot-grid flex items-center justify-center px-4 relative overflow-hidden"
          style={{ background: 'var(--bg-base)' }}>
       <div className="glow-orb w-96 h-96 top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"
-           style={{ background: 'rgba(99,102,241,0.12)' }} />
+           style={{ background: 'color-mix(in srgb, var(--accent) 12%, transparent)' }} />
       <div className="relative w-full max-w-[420px]">
         <Logo />
         <div className="card p-8 text-center" style={{ background: 'var(--bg-surface)' }}>
           {/* Check */}
           <div className="flex justify-center mb-5">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                 style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', boxShadow: '0 8px 32px rgba(99,102,241,0.5)' }}>
+                 style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-light))', boxShadow: '0 8px 32px color-mix(in srgb, var(--accent) 50%, transparent)' }}>
               <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.5 12.75l6 6 9-13.5" />
               </svg>
@@ -71,7 +71,7 @@ export default function RegisterPage() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                     style={{ background: 'rgba(99,102,241,0.2)' }}>
+                     style={{ background: 'color-mix(in srgb, var(--accent) 20%, transparent)' }}>
                   <svg className="w-4 h-4" style={{ color: 'var(--accent-light)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -106,9 +106,9 @@ export default function RegisterPage() {
     <div className="min-h-screen dot-grid flex items-center justify-center px-4 relative overflow-hidden"
          style={{ background: 'var(--bg-base)' }}>
       <div className="glow-orb w-96 h-96 top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"
-           style={{ background: 'rgba(99,102,241,0.12)' }} />
+           style={{ background: 'color-mix(in srgb, var(--accent) 12%, transparent)' }} />
       <div className="glow-orb w-64 h-64 bottom-0 right-0 translate-x-1/3 translate-y-1/3"
-           style={{ background: 'rgba(139,92,246,0.08)' }} />
+           style={{ background: 'color-mix(in srgb, var(--accent-light) 8%, transparent)' }} />
 
       <div className="relative w-full max-w-[400px]">
         <Logo />

@@ -4,6 +4,15 @@ import { useEffect, useState } from 'react'
 
 const TEMAS = [
   {
+    id: 'flat',
+    label: 'Flat',
+    desc: 'Claro, azul y amigable',
+    sidebar: '#ffffff',
+    surface: '#ecf0f1',
+    accent: '#3498db',
+    text: '#2c3e50',
+  },
+  {
     id: 'dark',
     label: 'Oscuro',
     desc: 'Suave para los ojos de noche',
@@ -60,16 +69,16 @@ const TEMAS = [
 ]
 
 export default function ThemeSwitcher() {
-  const [active, setActive] = useState('dark')
+  const [active, setActive] = useState('flat')
 
   useEffect(() => {
-    const saved = localStorage.getItem('amelia-theme') ?? 'dark'
+    const saved = localStorage.getItem('amelia-theme') ?? 'flat'
     setActive(saved)
     applyTheme(saved)
   }, [])
 
   function applyTheme(theme: string) {
-    if (theme === 'dark') {
+    if (theme === 'flat') {
       document.documentElement.removeAttribute('data-theme')
     } else {
       document.documentElement.setAttribute('data-theme', theme)

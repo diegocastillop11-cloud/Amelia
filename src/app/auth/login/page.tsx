@@ -27,16 +27,16 @@ export default function LoginPage() {
          style={{ background: 'var(--bg-base)' }}>
       {/* Orbs de fondo */}
       <div className="glow-orb w-96 h-96 top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"
-           style={{ background: 'rgba(99,102,241,0.12)' }} />
+           style={{ background: 'color-mix(in srgb, var(--accent) 12%, transparent)' }} />
       <div className="glow-orb w-64 h-64 bottom-0 right-0 translate-x-1/3 translate-y-1/3"
-           style={{ background: 'rgba(139,92,246,0.08)' }} />
+           style={{ background: 'color-mix(in srgb, var(--accent-light) 8%, transparent)' }} />
 
       <div className="relative w-full max-w-[400px]">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2.5 mb-5">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-sm shadow-lg"
-                 style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', boxShadow: '0 4px 20px rgba(99,102,241,0.4)' }}>
+                 style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-light))', boxShadow: '0 4px 20px color-mix(in srgb, var(--accent) 40%, transparent)' }}>
               A
             </div>
             <span className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Amelia</span>
