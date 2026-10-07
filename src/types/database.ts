@@ -80,6 +80,7 @@ export interface SiteContent {
     headingColor?: string
     textColor?: string
     bgColor?: string
+    fontId?: string
     galleryFrame?: 'rounded' | 'square' | 'circle' | 'shadow' | 'border' | 'polaroid'
     logoShape?: 'default' | 'rounded' | 'circle' | 'square'
     logoSize?: 'sm' | 'md' | 'lg' | 'xl'

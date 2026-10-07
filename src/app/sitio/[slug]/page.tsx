@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { SiteContent } from '@/types/database'
 import { SiteRenderer, type TemplateId, type ProductItem } from '@/components/site-builder/templates/SiteRenderer'
+import { findFont, fontUrl } from '@/components/site-builder/fonts'
 import SiteWithChat from './SiteWithChat'
 import SiteCart, { type DeliverySettings } from './SiteCart'
 
@@ -94,12 +95,12 @@ export default async function SitioPublicoPage({ params }: { params: { slug: str
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@400;700;800&family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;700&family=Poppins:wght@400;500;600;700&family=Montserrat:wght@400;500;700;800&display=swap" rel="stylesheet" />
+      <link href={fontUrl(content.theme?.fontId)} rel="stylesheet" />
 
       <SiteRenderer
         content={content} color={color} template={templateId}
         name={business.name} logo={business.logo_url} cover={business.cover_url}
-        gallery={(content.gallery ?? []) as string[]} fontFamily="Inter, sans-serif"
+        gallery={(content.gallery ?? []) as string[]} fontFamily={findFont(content.theme?.fontId).family}
         slug={params.slug} products={products}
       />
 

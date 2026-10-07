@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { SiteContent } from '@/types/database'
 import { getTheme } from './templates/SiteRenderer'
+import { FONTS, findFont, fontUrl } from './fonts'
 
 type TemplateId = 'moderna' | 'clasica' | 'dark' | 'vibrante' | 'elegante' | 'minimalista' | 'bold' | 'sunset' | 'glass' | 'neon' | 'glass3d' | 'cosmic' | 'retro'
 interface Service { name: string; description: string; price: string; image?: string; featured?: boolean }
@@ -60,20 +61,6 @@ const TEMPLATES: {id: TemplateId; label: string; badge?: string}[] = [
   {id:'glass',label:'Glass'},{id:'elegante',label:'Elegante'},{id:'dark',label:'Dark'},
   {id:'neon',label:'Neon',badge:'nuevo'},{id:'glass3d',label:'Glass 3D',badge:'nuevo'},
   {id:'cosmic',label:'Cosmic',badge:'nuevo'},{id:'retro',label:'Retro',badge:'nuevo'},
-]
-const FONTS = [
-  {id:'inter',label:'Inter',family:'Inter, sans-serif',google:''},
-  {id:'sora',label:'Sora',family:"'Sora', sans-serif",google:'Sora:wght@400;600;700;800'},
-  {id:'playfair',label:'Playfair Display',family:"'Playfair Display', serif",google:'Playfair+Display:wght@400;700;800'},
-  {id:'space',label:'Space Grotesk',family:"'Space Grotesk', sans-serif",google:'Space+Grotesk:wght@400;500;700'},
-  {id:'poppins',label:'Poppins',family:"'Poppins', sans-serif",google:'Poppins:wght@400;500;600;700'},
-  {id:'montserrat',label:'Montserrat',family:"'Montserrat', sans-serif",google:'Montserrat:wght@400;500;700;800'},
-  {id:'raleway',label:'Raleway',family:"'Raleway', sans-serif",google:'Raleway:wght@400;500;700;800'},
-  {id:'nunito',label:'Nunito',family:"'Nunito', sans-serif",google:'Nunito:wght@400;600;700;800'},
-  {id:'dm',label:'DM Sans',family:"'DM Sans', sans-serif",google:'DM+Sans:wght@400;500;700'},
-  {id:'lora',label:'Lora',family:"'Lora', serif",google:'Lora:wght@400;600;700'},
-  {id:'merriweather',label:'Merriweather',family:"'Merriweather', serif",google:'Merriweather:wght@400;700'},
-  {id:'outfit',label:'Outfit',family:"'Outfit', sans-serif",google:'Outfit:wght@400;500;700'},
 ]
 const SECTIONS_LIST = [
   {key:'hero',label:'Hero'},{key:'nosotros',label:'Nosotros'},{key:'servicios',label:'Servicios'},
@@ -182,7 +169,7 @@ export default function SiteEditorClient({
   const [colorH,    setColorH]    = useState(initialContent.theme?.headingColor ?? '')
   const [colorT,    setColorT]    = useState(initialContent.theme?.textColor ?? '')
   const [colorBg,   setColorBg]   = useState(initialContent.theme?.bgColor ?? '')
-  const [fontId,    setFontId]    = useState('inter')
+  const [fontId,    setFontId]    = useState(initialContent.theme?.fontId ?? 'inter')
   const [fontOpen,  setFontOpen]  = useState(false)
   const [logo,      setLogo]      = useState<string|null>(initialLogo)
   const [cover,     setCover]     = useState<string|null>(initialCover)
@@ -197,7 +184,15 @@ export default function SiteEditorClient({
   const logoRef   = useRef<HTMLInputElement>(null)
   const coverRef  = useRef<HTMLInputElement>(null)
   const galleryRef= useRef<HTMLInputElement>(null)
-  const font = FONTS.find(f=>f.id===fontId)??FONTS[0]
+  const font = findFont(fontId)
+  const fontIdRef = useRef(fontId)
+  useEffect(()=>{
+    fontIdRef.current = fontId
+    const id='amelia-font-link'
+    let l=document.getElementById(id) as HTMLLinkElement|null
+    if(!l){l=document.createElement('link');l.id=id;l.rel='stylesheet';document.head.appendChild(l)}
+    l.href=fontUrl(fontId)
+  },[fontId])
 
   const colorHRef  = useRef(colorH)
   const colorTRef  = useRef(colorT)
@@ -215,6 +210,7 @@ export default function SiteEditorClient({
         headingColor: colorHRef.current  || undefined,
         textColor:    colorTRef.current  || undefined,
         bgColor:      colorBgRef.current || undefined,
+        fontId:       fontIdRef.current,
       }
     }
     try {
@@ -454,7 +450,7 @@ export default function SiteEditorClient({
                     {fontOpen&&(
                       <div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:50,background:'#1a1a2e',border:'1px solid rgba(255,255,255,0.1)',borderRadius:10,marginTop:4,maxHeight:260,overflowY:'auto',boxShadow:'0 8px 32px rgba(0,0,0,0.5)'}}>
                         {FONTS.map(f=>(
-                          <button key={f.id} onClick={()=>{setFontId(f.id);setFontOpen(false)}} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'9px 12px',border:'none',cursor:'pointer',textAlign:'left',background:fontId===f.id?'rgba(99,102,241,0.15)':'transparent',borderBottom:'1px solid rgba(255,255,255,0.04)',fontFamily:'Inter,sans-serif'}}>
+                          <button key={f.id} onClick={()=>{setFontId(f.id);setFontOpen(false);setSaveState('unsaved')}} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'9px 12px',border:'none',cursor:'pointer',textAlign:'left',background:fontId===f.id?'rgba(99,102,241,0.15)':'transparent',borderBottom:'1px solid rgba(255,255,255,0.04)',fontFamily:'Inter,sans-serif'}}>
                             <div><p style={{fontSize:13,fontFamily:f.family,color:'#e2e8f0',marginBottom:1}}>{f.label}</p><p style={{fontSize:10,fontFamily:f.family,color:'#4b4b6b'}}>Aa Bb 123</p></div>
                             {fontId===f.id&&<span style={{color:'#a5b4fc',fontSize:12}}>✓</span>}
                           </button>
