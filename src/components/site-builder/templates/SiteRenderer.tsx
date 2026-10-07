@@ -427,9 +427,9 @@ export function SiteRenderer({
               { label: 'Galería',     anchor: 'galeria',     visible: gallery.length > 0 },
               { label: 'Contacto',    anchor: 'contacto',    visible: true },
             ]
-            const navLinks = content.nav
-              ? content.nav.filter(l => l.visible)
-              : defaultLinks.filter(l => l.visible)
+            const anchorSection: Record<string, string> = { inicio: 'hero', servicios: 'servicios', precios: 'precios', testimonios: 'resenas', faq: 'faq', galeria: 'galeria', contacto: 'contacto' }
+            const navLinks = (content.nav ?? defaultLinks)
+              .filter(l => l.visible && show(anchorSection[l.anchor] ?? l.anchor))
             const linkHtml = navLinks.map(l =>
               `<a href="#${l.anchor}" style="padding:0.4rem 0.75rem;border-radius:8px;font-size:0.8rem;font-weight:500;color:${t.muted};text-decoration:none;transition:all 0.15s" onmouseover="this.style.color='${sectFg}';this.style.background='rgba(128,128,128,0.12)'" onmouseout="this.style.color='${t.muted}';this.style.background='transparent'">${l.label}</a>`
             ).join('')
