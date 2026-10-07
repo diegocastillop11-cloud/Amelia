@@ -81,6 +81,7 @@ export interface SiteContent {
     textColor?: string
     bgColor?: string
     fontId?: string
+    hiddenSections?: string[]
     galleryFrame?: 'rounded' | 'square' | 'circle' | 'shadow' | 'border' | 'polaroid'
     logoShape?: 'default' | 'rounded' | 'circle' | 'square'
     logoSize?: 'sm' | 'md' | 'lg' | 'xl'

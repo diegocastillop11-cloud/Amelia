@@ -45,6 +45,7 @@ export interface SiteRendererProps {
   content: SiteContent; color: string; template: TemplateId
   name: string; logo?: string | null; cover?: string | null
   gallery?: string[]; fontFamily?: string; slug?: string
+  staticPreview?: boolean
   products?: ProductItem[]
 }
 
@@ -198,7 +199,7 @@ document.addEventListener('keydown', function(e) {
 
 export function SiteRenderer({
   content, color, template, name, logo, cover, gallery = [],
-  fontFamily = 'Inter, sans-serif', slug = '', products = [],
+  fontFamily = 'Inter, sans-serif', slug = '', products = [], staticPreview = false,
 }: SiteRendererProps) {
   const hasCover = !!(cover && cover.trim().length > 5)
   const t = getTheme(template, color, hasCover)
@@ -220,9 +221,11 @@ export function SiteRenderer({
 
   // Toggles de animaciones (default true — activo en sitios existentes)
   const animAurora      = content.theme?.animAurora      ?? true
-  const animTypewriter  = content.theme?.animTypewriter  ?? true
+  const animTypewriter  = staticPreview ? false : (content.theme?.animTypewriter  ?? true)
   const animBorderBeam  = content.theme?.animBorderBeam  ?? true
-  const animScrollReveal= content.theme?.animScrollReveal ?? true
+  const animScrollReveal= staticPreview ? false : (content.theme?.animScrollReveal ?? true)
+  const hiddenSections  = content.theme?.hiddenSections ?? []
+  const show = (k: string) => !hiddenSections.includes(k)
   const animTerminal    = content.theme?.animTerminal    ?? true
   const animNumber      = content.theme?.animNumber      ?? true
 
@@ -444,6 +447,7 @@ export function SiteRenderer({
         </nav>
 
         {/* ── HERO ── */}
+        {show('hero') && (
         <div id="inicio" style={{ background: heroBg, padding: t.mini ? '5rem 3rem' : t.bold ? '6rem 2rem' : '5rem 2rem',
                       position: 'relative', overflow: 'hidden' }}>
           {/* Dot grid para moderna */}
@@ -587,8 +591,10 @@ export function SiteRenderer({
             {t.mini && <span style={{ fontSize: '0.875rem', color: t.muted, marginLeft: '1rem' }}>Sin compromiso</span>}
           </div>
         </div>
+        )}
 
         {/* ── NOSOTROS ── */}
+        {show('nosotros') && (
         <div className={animScrollReveal ? 'amelia-reveal' : undefined} style={{
           padding: t.mini ? '4rem 3rem' : '4.5rem 2rem',
           textAlign: t.mini ? 'left' : 'center',
@@ -615,8 +621,10 @@ export function SiteRenderer({
             {content.about.text}
           </p>
         </div>
+        )}
 
         {/* ── SERVICIOS ── */}
+        {show('servicios') && (
         <div id="servicios" style={{ padding: t.mini ? '3rem 3rem' : '4rem 2rem', background: t.sectBg }}>
           {t.mini ? (
             <div style={{ maxWidth: '700px' }}>
@@ -687,6 +695,7 @@ export function SiteRenderer({
             </>
           )}
         </div>
+        )}
 
 
         {/* ── PRODUCTOS ── */}
@@ -808,7 +817,7 @@ export function SiteRenderer({
         )}
 
         {/* ── BENEFICIOS ── */}
-        {content.benefits && content.benefits.length > 0 && (
+        {show('beneficios') && content.benefits && content.benefits.length > 0 && (
           <div style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : '#f9fafb' }}>
             <div style={{ maxWidth: 960, margin: '0 auto' }}>
               <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
@@ -839,7 +848,7 @@ export function SiteRenderer({
         )}
 
         {/* ── CÓMO FUNCIONA ── */}
-        {content.steps && content.steps.length > 0 && (
+        {show('pasos') && content.steps && content.steps.length > 0 && (
           <div style={{ padding: '5rem 2rem', background: t.sectBg }}>
             <div style={{ maxWidth: 860, margin: '0 auto' }}>
               <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
@@ -870,7 +879,7 @@ export function SiteRenderer({
         )}
 
         {/* ── PRECIOS ── */}
-        {content.pricing && content.pricing.length > 0 && (
+        {show('precios') && content.pricing && content.pricing.length > 0 && (
           <div id="precios" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : 'white' }}>
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
               <h2 className={animScrollReveal ? 'amelia-reveal' : undefined} style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
@@ -927,7 +936,7 @@ export function SiteRenderer({
         )}
 
         {/* ── GALERÍA ── */}
-        {gallery.length > 0 && (
+        {show('galeria') && gallery.length > 0 && (
           <div id="galeria" style={{ padding: '4rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.02)' : t.vib ? 'rgba(0,0,0,0.1)' : 'white' }}>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '2.5rem', color: sectFg }}>
               {content.sectionTitles?.gallery ?? 'Nuestros trabajos'}
@@ -955,7 +964,7 @@ export function SiteRenderer({
         )}
 
         {/* ── RESEÑAS ── */}
-        {content.reviews && content.reviews.length > 0 && (
+        {show('resenas') && content.reviews && content.reviews.length > 0 && (
           <div id="testimonios" style={{ padding: '4rem 2rem', background: t.sectBg }}>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '2.5rem', color: sectFg }}>
               {content.sectionTitles?.reviews ?? 'Lo que dicen nuestros clientes'}
@@ -982,7 +991,7 @@ export function SiteRenderer({
         )}
 
         {/* ── FAQ ── */}
-        {content.faq && content.faq.length > 0 && (
+        {show('faq') && content.faq && content.faq.length > 0 && (
           <div id="faq" style={{ padding: '5rem 2rem', position: 'relative', overflow: 'hidden', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : '#f9fafb' }}>
             {/* Animated diagonal stripes overlay */}
             <div className="amelia-stripe-bg" style={{
@@ -1018,7 +1027,7 @@ export function SiteRenderer({
         )}
 
         {/* ── CONTACTO (info + formulario unificados) ── */}
-        {slug && (() => {
+        {slug && show('contacto') && (() => {
           const c       = content.contact
           const phone   = c?.phone?.trim()
           const wa      = c?.whatsapp?.trim()

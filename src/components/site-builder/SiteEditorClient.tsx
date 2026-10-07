@@ -178,7 +178,11 @@ export default function SiteEditorClient({
   const [mode,      setMode]      = useState<'edit'|'preview'>('edit')
   const [viewport,  setViewport]  = useState<'desktop'|'movil'>('desktop')
   const [panel,     setPanel]     = useState<'plantilla'|'secciones'|'acciones'>('plantilla')
-  const [sections,  setSections]  = useState({hero:true,nosotros:true,servicios:true,precios:true,pasos:true,beneficios:true,resenas:true,faq:true,galeria:true,contacto:true})
+  const [sections,  setSections]  = useState(()=>{
+    const hid = initialContent.theme?.hiddenSections ?? []
+    const all = {hero:true,nosotros:true,servicios:true,precios:true,pasos:true,beneficios:true,resenas:true,faq:true,galeria:true,contacto:true}
+    return Object.fromEntries(Object.entries(all).map(([k])=>[k,!hid.includes(k)])) as typeof all
+  })
   const [saveState, setSaveState] = useState<'saved'|'saving'|'unsaved'>('saved')
   const [published, setPublished] = useState(initPublished)
   const [publishing,setPublishing]= useState(false)
@@ -188,6 +192,8 @@ export default function SiteEditorClient({
   const galleryRef= useRef<HTMLInputElement>(null)
   const font = findFont(fontId)
   const fontIdRef = useRef(fontId)
+  const sectionsRef = useRef(sections)
+  useEffect(()=>{ sectionsRef.current = sections },[sections])
   useEffect(()=>{
     fontIdRef.current = fontId
     const id='amelia-font-link'
@@ -213,6 +219,7 @@ export default function SiteEditorClient({
         textColor:    colorTRef.current  || undefined,
         bgColor:      colorBgRef.current || undefined,
         fontId:       fontIdRef.current,
+        hiddenSections: Object.entries(sectionsRef.current).filter(([,v])=>!v).map(([k])=>k),
       }
     }
     try {
@@ -597,7 +604,7 @@ export default function SiteEditorClient({
                   {SECTIONS_LIST.map(s=>(
                     <div key={s.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,background:'rgba(255,255,255,0.03)'}}>
                       <span style={{fontSize:11,color:'#8b8bab'}}>{s.label}</span>
-                      <div onClick={()=>setSections(prev=>({...prev,[s.key]:!prev[s.key as keyof typeof prev]}))} style={{width:32,height:18,borderRadius:9,position:'relative',cursor:'pointer',background:sections[s.key as keyof typeof sections]?color:'rgba(255,255,255,0.1)',transition:'background 0.2s'}}>
+                      <div onClick={()=>{setSections(prev=>({...prev,[s.key]:!prev[s.key as keyof typeof prev]}));setSaveState('unsaved')}} style={{width:32,height:18,borderRadius:9,position:'relative',cursor:'pointer',background:sections[s.key as keyof typeof sections]?color:'rgba(255,255,255,0.1)',transition:'background 0.2s'}}>
                         <div style={{width:14,height:14,background:'white',borderRadius:7,position:'absolute',top:2,transition:'left 0.2s',left:sections[s.key as keyof typeof sections]?15:2}}/>
                       </div>
                     </div>
@@ -729,9 +736,9 @@ export default function SiteEditorClient({
               {/* SITIO */}
               {mode==='preview'&&(
                 <SiteRenderer
-                  content={{...content,theme:{...(content.theme??{}),headingColor:colorH||undefined,textColor:colorT||undefined,bgColor:colorBg||undefined,fontId}}}
+                  content={{...content,theme:{...(content.theme??{}),headingColor:colorH||undefined,textColor:colorT||undefined,bgColor:colorBg||undefined,fontId,hiddenSections:Object.entries(sections).filter(([,v])=>!v).map(([k])=>k)}}}
                   color={color} template={template} name={name} logo={logo} cover={cover}
-                  gallery={gallery} fontFamily={font.family} slug={businessSlug} products={products}
+                  gallery={gallery} fontFamily={font.family} slug={businessSlug} products={products} staticPreview
                 />
               )}
               <div style={{background:pageBg,minHeight:'100vh',color:navFg,display:mode==='preview'?'none':'block'}}>
