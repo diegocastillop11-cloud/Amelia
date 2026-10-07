@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/layout/Sidebar'
 import AdminSidebar from '@/components/admin/AdminSidebar'
+import AyudaFlotante from '@/components/dashboard/AyudaFlotante'
 
 export default async function DashboardLayout({
   children,
@@ -44,6 +45,7 @@ export default async function DashboardLayout({
         <Sidebar userEmail={user.email ?? ''} plan={plan} modules={modules} hasSite={hasSite} />
       )}
       <main className="flex-1 overflow-y-auto">{children}</main>
+      <AyudaFlotante />
     </div>
   )
 }

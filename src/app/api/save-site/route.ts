@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-    const { business_id, content, business_name, template_id, primary_color } = await req.json()
+    const { business_id, content, business_name, template_id, primary_color, logo_url, cover_url } = await req.json()
 
     const isSuperAdmin = user.email === process.env.SUPERADMIN_EMAIL
     if (!isSuperAdmin) {
@@ -21,9 +21,11 @@ export async function POST(req: Request) {
     }
 
     // Actualizar nombre y color en businesses
-    const bizUpdate: Record<string, string> = {}
+    const bizUpdate: Record<string, string | null> = {}
     if (primary_color) bizUpdate.primary_color = primary_color
     if (business_name) bizUpdate.name = business_name
+    if (logo_url !== undefined) bizUpdate.logo_url = logo_url || null
+    if (cover_url !== undefined) bizUpdate.cover_url = cover_url || null
     if (Object.keys(bizUpdate).length > 0) {
       await supabase.from('businesses').update(bizUpdate).eq('id', business_id)
     }

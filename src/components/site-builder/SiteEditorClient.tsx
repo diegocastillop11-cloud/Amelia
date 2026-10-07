@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import type { SiteContent } from '@/types/database'
 import { getTheme, SiteRenderer, type ProductItem } from './templates/SiteRenderer'
 import { FONTS, findFont, fontUrl } from './fonts'
+import WizardSitio from './WizardSitio'
 
 type TemplateId = 'moderna' | 'clasica' | 'dark' | 'vibrante' | 'elegante' | 'minimalista' | 'bold' | 'sunset' | 'glass' | 'neon' | 'glass3d' | 'cosmic' | 'retro'
 interface Service { name: string; description: string; price: string; image?: string; featured?: boolean }
@@ -175,6 +176,7 @@ export default function SiteEditorClient({
   const [logo,      setLogo]      = useState<string|null>(initialLogo)
   const [cover,     setCover]     = useState<string|null>(initialCover)
   const [gallery,   setGallery]   = useState<string[]>((initialContent.gallery??[]) as string[])
+  const [easy,      setEasy]      = useState(true)
   const [mode,      setMode]      = useState<'edit'|'preview'>('edit')
   const [viewport,  setViewport]  = useState<'desktop'|'movil'>('desktop')
   const [panel,     setPanel]     = useState<'plantilla'|'secciones'|'acciones'>('plantilla')
@@ -194,6 +196,10 @@ export default function SiteEditorClient({
   const [srcDoc, setSrcDoc] = useState('')
   const fontIdRef = useRef(fontId)
   const sectionsRef = useRef(sections)
+  const logoValRef = useRef(logo)
+  const coverValRef = useRef(cover)
+  useEffect(()=>{ logoValRef.current = logo },[logo])
+  useEffect(()=>{ coverValRef.current = cover },[cover])
   useEffect(()=>{ sectionsRef.current = sections },[sections])
   useEffect(()=>{
     fontIdRef.current = fontId
@@ -243,7 +249,7 @@ export default function SiteEditorClient({
     }
     try {
       await fetch('/api/save-site',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({business_id:businessId,content:withTheme,business_name:n,template_id:tpl,primary_color:col})})
+        body:JSON.stringify({business_id:businessId,content:withTheme,business_name:n,template_id:tpl,primary_color:col,logo_url:logoValRef.current,cover_url:coverValRef.current})})
       setSaveState('saved')
     } catch { setSaveState('unsaved') }
   },[businessId])
@@ -318,6 +324,17 @@ export default function SiteEditorClient({
     if(r.ok) setPublished(true); setPublishing(false)
   }
 
+  useEffect(()=>{ try{ if(localStorage.getItem('amelia-editor-easy')==='0') setEasy(false) }catch{} },[])
+  useEffect(()=>{ setMode(easy?'preview':'edit') },[easy])
+  const cambiarModo=(v:boolean)=>{ setEasy(v); try{localStorage.setItem('amelia-editor-easy',v?'1':'0')}catch{} }
+
+  // Autoguardado: solo mientras el sitio es borrador (si ya está publicado, los cambios se publican al guardar)
+  useEffect(()=>{
+    if(saveState!=='unsaved'||published) return
+    const tm=setTimeout(()=>{ save(content,name,color,template) },2500)
+    return ()=>clearTimeout(tm)
+  },[saveState,published,content,name,color,template,colorH,colorT,colorBg,fontId,sections,logo,cover,gallery,save])
+
   // ── Tema ────────────────────────────────────────────────
   const hasCover = !!(cover&&cover.trim().length>5)
   const th=getTheme(template,color,hasCover)
@@ -343,8 +360,8 @@ export default function SiteEditorClient({
 
       {/* TOP BAR */}
       <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 16px',background:'#0f0f1a',borderBottom:'1px solid rgba(255,255,255,0.06)',flexShrink:0}}>
-        <a href="/dashboard" style={{color:'#6b6b8a',fontSize:12,textDecoration:'none'}}>← Dashboard</a>
-        <span style={{color:'#e2e8f0',fontSize:13,fontWeight:600}}>Editor visual</span>
+        <a href="/dashboard" style={{color:'#6b6b8a',fontSize:easy?14:12,textDecoration:'none'}}>{easy?'← Volver al inicio':'← Dashboard'}</a>
+        <span style={{color:'#e2e8f0',fontSize:13,fontWeight:600}}>{easy?'Mi sitio web':'Editor visual'}</span>
         <span style={{background:published?'rgba(16,185,129,0.15)':'rgba(245,158,11,0.15)',color:published?'#6ee7b7':'#fcd34d',border:`1px solid ${published?'rgba(16,185,129,0.3)':'rgba(245,158,11,0.3)'}`,fontSize:9,fontWeight:700,padding:'2px 8px',borderRadius:20}}>
           {published?'PUBLICADO':'BORRADOR'}
         </span>
@@ -352,15 +369,17 @@ export default function SiteEditorClient({
         <div style={{display:'flex',background:'rgba(255,255,255,0.05)',borderRadius:8,padding:2}}>
           {(['desktop','movil'] as const).map(v=>(
             <button key={v} onClick={()=>setViewport(v)} style={{padding:'4px 12px',borderRadius:6,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,fontFamily:'Inter,sans-serif',background:viewport===v?'rgba(99,102,241,0.3)':'transparent',color:viewport===v?'#a5b4fc':'#4b4b6b'}}>
-              {v==='desktop'?'Desktop':'Móvil'}
+              {v==='desktop'?(easy?'💻 Computador':'Desktop'):(easy?'📱 Celular':'Móvil')}
             </button>
           ))}
         </div>
-        <div style={{display:'flex',background:'rgba(255,255,255,0.05)',borderRadius:8,padding:2}}>
+        {!easy&&<button onClick={()=>cambiarModo(true)} style={{padding:'5px 12px',borderRadius:8,border:'1px solid rgba(16,185,129,0.4)',background:'rgba(16,185,129,0.12)',color:'#6ee7b7',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'Inter,sans-serif'}}>✨ Modo fácil</button>}
+        {!easy&&<div style={{display:'flex',background:'rgba(255,255,255,0.05)',borderRadius:8,padding:2}}>
           {([['edit','✏️ Editar'],['preview','👁 Vista previa real']] as const).map(([m,l])=>(
             <button key={m} onClick={()=>setMode(m)} style={{padding:'4px 12px',borderRadius:6,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,fontFamily:'Inter,sans-serif',background:mode===m?'rgba(16,185,129,0.25)':'transparent',color:mode===m?'#6ee7b7':'#4b4b6b'}}>{l}</button>
           ))}
-        </div>
+        </div>}
+        {!easy&&<>
         <span style={{fontSize:11,color:saveState==='saved'?'#10b981':saveState==='saving'?'#f59e0b':'#ef4444'}}>
           {saveState==='saved'?'● Guardado':saveState==='saving'?'⟳ Guardando...':'● Cambios sin guardar'}
         </span>
@@ -375,11 +394,23 @@ export default function SiteEditorClient({
         <button onClick={publish} disabled={publishing} style={{background:'linear-gradient(135deg,#6366f1,#8b5cf6)',color:'white',border:'none',padding:'6px 16px',borderRadius:8,fontSize:12,fontWeight:700,cursor:publishing?'not-allowed':'pointer',opacity:publishing?0.6:1,fontFamily:'Inter,sans-serif',boxShadow:'0 2px 12px rgba(99,102,241,0.4)'}}>
           {publishing?'Publicando...':published?'✓ Publicar cambios':'🚀 Publicar mi sitio'}
         </button>
+        </>}
       </div>
 
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* PANEL IZQ */}
+        {easy ? (
+          <WizardSitio
+            name={name} onName={editName}
+            logo={logo} onLogo={async f=>{const u=await upload(f,'logo');if(u){setLogo(u);setSaveState('unsaved')}}} onLogoRemove={()=>{setLogo(null);setSaveState('unsaved')}}
+            template={template} onTemplate={t=>setTpl(t as TemplateId)}
+            color={color} onColor={setCol}
+            content={content} onEdit={edit} onSvc={(i,f,v)=>editSvc(i,f,v)}
+            published={published} publishing={publishing} onPublish={publish}
+            slug={businessSlug} saveState={saveState} onAdvanced={()=>cambiarModo(false)}
+          />
+        ) : (
         <div style={{width:210,background:'#0f0f1a',borderRight:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           <div style={{display:'flex',padding:'8px 8px 0',gap:2,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
             {(['plantilla','secciones','acciones'] as const).map(p=>(
@@ -743,6 +774,8 @@ export default function SiteEditorClient({
             )}
           </div>
         </div>
+
+        )}
 
         {/* PREVIEW */}
         <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:'#1a1a2e'}} onClick={()=>fontOpen&&setFontOpen(false)}>
