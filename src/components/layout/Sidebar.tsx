@@ -4,19 +4,21 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { PLAN_DEFAULTS, ModuleKey } from '@/lib/modules'
 
-const BASE_NAV: { href: string; icon: string; label: string; exact?: boolean; root?: string; moduleKey?: ModuleKey }[] = [
-  { href: '/dashboard',                  icon: '⚡', label: 'Inicio',     exact: true  },
-  { href: '/dashboard/reservas',         icon: '📅', label: 'Agenda',     moduleKey: 'reservas' },
-  { href: '/dashboard/clientes',         icon: '👥', label: 'Clientes',   moduleKey: 'clientes' },
-  { href: '/dashboard/horarios',         icon: '🕐', label: 'Horarios',   moduleKey: 'horarios' },
-  { href: '/dashboard/productos',        icon: '📦', label: 'Productos',  moduleKey: 'productos' },
-  { href: '/dashboard/pedidos',          icon: '🛒', label: 'Pedidos',    moduleKey: 'productos' },
-  { href: '/dashboard/metricas',          icon: '📊', label: 'Métricas',      moduleKey: 'metricas' },
-  { href: '/dashboard/asistente',        icon: '🤖', label: 'Asistente IA'  },
-  { href: '/dashboard/marketing',        icon: '📣', label: 'Marketing IA'   },
-  { href: '/dashboard/whatsapp',         icon: '💬', label: 'WhatsApp Bot'   },
-  { href: '/dashboard/recordatorios',    icon: '🔔', label: 'Recordatorios', moduleKey: 'recordatorios' },
-  { href: '/dashboard/settings',         icon: '⚙️', label: 'Ajustes'   },
+type NavItem = { href: string; icon: string; label: string; group: string; exact?: boolean; root?: string; moduleKey?: ModuleKey }
+
+const BASE_NAV: NavItem[] = [
+  { href: '/dashboard',                  icon: '⚡', label: 'Inicio',        group: '', exact: true },
+  { href: '/dashboard/productos',        icon: '📦', label: 'Productos',     group: 'Mi negocio', moduleKey: 'productos' },
+  { href: '/dashboard/pedidos',          icon: '🛒', label: 'Pedidos',       group: 'Mi negocio', moduleKey: 'productos' },
+  { href: '/dashboard/reservas',         icon: '📅', label: 'Agenda',        group: 'Atención al cliente', moduleKey: 'reservas' },
+  { href: '/dashboard/horarios',         icon: '🕐', label: 'Horarios',      group: 'Atención al cliente', moduleKey: 'horarios' },
+  { href: '/dashboard/clientes',         icon: '👥', label: 'Clientes',      group: 'Atención al cliente', moduleKey: 'clientes' },
+  { href: '/dashboard/recordatorios',    icon: '🔔', label: 'Recordatorios', group: 'Atención al cliente', moduleKey: 'recordatorios' },
+  { href: '/dashboard/whatsapp',         icon: '💬', label: 'WhatsApp Bot',  group: 'Atención al cliente' },
+  { href: '/dashboard/metricas',         icon: '📊', label: 'Métricas',      group: 'Crecimiento', moduleKey: 'metricas' },
+  { href: '/dashboard/marketing',        icon: '📣', label: 'Marketing IA',  group: 'Crecimiento' },
+  { href: '/dashboard/asistente',        icon: '🤖', label: 'Asistente IA',  group: 'Crecimiento' },
+  { href: '/dashboard/settings',         icon: '⚙️', label: 'Ajustes',       group: 'Cuenta' },
 ]
 
 interface Props {
@@ -30,9 +32,9 @@ export default function Sidebar({ userEmail, plan = 'free', modules, hasSite = f
   const path = usePathname()
   const activeModules = modules ?? PLAN_DEFAULTS[plan] ?? PLAN_DEFAULTS.free
 
-  const siteItem: { href: string; icon: string; label: string; exact?: boolean; root?: string; moduleKey?: ModuleKey } = hasSite
-    ? { href: '/dashboard/sitio/editor', icon: '🌐', label: 'Editar Sitio', root: '/dashboard/sitio' }
-    : { href: '/dashboard/sitio',        icon: '✨', label: 'Crear Sitio',  root: '/dashboard/sitio' }
+  const siteItem: NavItem = hasSite
+    ? { href: '/dashboard/sitio/editor', icon: '🌐', label: 'Editar Sitio', group: 'Mi negocio', root: '/dashboard/sitio' }
+    : { href: '/dashboard/sitio',        icon: '✨', label: 'Crear Sitio',  group: 'Mi negocio', root: '/dashboard/sitio' }
 
   const NAV = [BASE_NAV[0], siteItem, ...BASE_NAV.slice(1)]
 
@@ -51,14 +53,19 @@ export default function Sidebar({ userEmail, plan = 'free', modules, hasSite = f
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, padding: '0.75rem 0.75rem', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {NAV.map(item => {
+      <nav style={{ flex: 1, padding: '0.75rem 0.75rem', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+        {NAV.map((item, idx) => {
           const active   = item.exact ? path === item.href : path.startsWith(item.root ?? item.href)
           const locked   = item.moduleKey ? !activeModules[item.moduleKey] : false
           const href     = locked ? '/dashboard/upgrade' : item.href
+          const newGroup = idx === 0 || item.group !== NAV[idx - 1].group
 
           return (
-            <Link key={item.href} href={href} className={`sb-link${active ? ' active' : ''}`}
+            <div key={item.href}>
+              {newGroup && item.group && (
+                <p className="section-label" style={{ margin: idx === 0 ? '4px 0 4px' : '16px 0 4px' }}>{item.group}</p>
+              )}
+            <Link href={href} className={`sb-link${active ? ' active' : ''}`}
                   title={locked ? `Módulo bloqueado — mejora tu plan` : undefined}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
@@ -73,6 +80,7 @@ export default function Sidebar({ userEmail, plan = 'free', modules, hasSite = f
                 <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>🔒</span>
               )}
             </Link>
+            </div>
           )
         })}
       </nav>
