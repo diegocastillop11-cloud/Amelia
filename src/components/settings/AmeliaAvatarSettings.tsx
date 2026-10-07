@@ -14,6 +14,22 @@ const PRESETS = [
   { id: 'brain',   label: 'IA',     emoji: '🧠', bg: 'linear-gradient(135deg,#14b8a6,#06b6d4)' },
 ]
 
+async function reducirImagen(file: File, max = 800): Promise<File> {
+  try {
+    const bmp = await createImageBitmap(file)
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(bmp.width * scale)
+    canvas.height = Math.round(bmp.height * scale)
+    canvas.getContext('2d')!.drawImage(bmp, 0, 0, canvas.width, canvas.height)
+    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/webp', 0.9))
+    if (!blob) return file
+    return new File([blob], file.name.replace(/\.\w+$/, '') + '.webp', { type: 'image/webp' })
+  } catch {
+    return file
+  }
+}
+
 export default function AmeliaAvatarSettings() {
   const [current, setCurrent] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -47,7 +63,7 @@ export default function AmeliaAvatarSettings() {
     setUploading(true)
     try {
       const fd = new FormData()
-      fd.append('file', file)
+      fd.append('file', await reducirImagen(file))
       fd.append('type', 'amelia-avatar')
       const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
       const data = await res.json()
