@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { SiteContent } from '@/types/database'
+import { getTheme } from './templates/SiteRenderer'
 
 type TemplateId = 'moderna' | 'clasica' | 'dark' | 'vibrante' | 'elegante' | 'minimalista' | 'bold' | 'sunset' | 'glass' | 'neon' | 'glass3d' | 'cosmic' | 'retro'
 interface Service { name: string; description: string; price: string; image?: string; featured?: boolean }
@@ -295,20 +296,21 @@ export default function SiteEditorClient({
 
   // ── Tema ────────────────────────────────────────────────
   const hasCover = !!(cover&&cover.trim().length>5)
-  const dark=template==='dark'; const vib=template==='vibrante'; const eleg=template==='elegante'; const mini=template==='minimalista'
-  const over=hasCover||dark||vib
-  const pageBg=colorBg||(dark?'#0a0a0f':vib?color:eleg?'#faf9f7':'#fff')
-  const navBg=dark?'rgba(0,0,0,0.65)':vib?'rgba(255,255,255,0.1)':'white'
-  const brd=dark?'rgba(255,255,255,0.08)':'#f0f0f0'
-  const muted=colorT||(dark?'rgba(255,255,255,0.5)':vib?'rgba(255,255,255,0.75)':'#6b7280')
-  const sectBg=dark?'rgba(255,255,255,0.02)':vib?'rgba(0,0,0,0.08)':'#f9fafb'
-  const navFg=colorH||(dark||vib?'white':'#111827')
-  const heroFg=colorH||(over?'white':'#111827')
+  const th=getTheme(template,color,hasCover)
+  const dark=th.dark||th.glass||th.bold; const vib=th.vib; const eleg=th.eleg; const mini=th.mini
+  const over=th.over
+  const pageBg=colorBg||th.pageBg
+  const navBg=th.navBg
+  const brd=th.border
+  const muted=colorT||th.muted
+  const sectBg=th.sectBg
+  const navFg=colorH||th.sectFg
+  const heroFg=colorH||th.fg
   const ctaBg=over?'white':color; const ctaFg=over?color:'white'
   const heroBg=hasCover
     ?`linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45)), url(${cover}) center/cover`
-    :dark?`radial-gradient(ellipse at 50% 0%, ${color}30, transparent 70%)`
-    :vib?`linear-gradient(135deg,${color},${color}cc)`:mini?'white':`linear-gradient(135deg,${color}14,${color}04)`
+    :(dark||th.neon||th.cosmic)?`radial-gradient(ellipse at 50% 0%, ${color}30, transparent 70%)`
+    :vib?`linear-gradient(135deg,${color},${color}cc)`:(mini||th.retro)?'transparent':`linear-gradient(135deg,${color}14,${color}04)`
 
   const S: React.CSSProperties={fontSize:9,fontWeight:700,color:'#3d3d5c',letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:8}
 

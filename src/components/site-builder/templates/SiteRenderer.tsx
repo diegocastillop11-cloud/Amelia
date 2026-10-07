@@ -48,7 +48,7 @@ export interface SiteRendererProps {
   products?: ProductItem[]
 }
 
-function getTheme(tpl: TemplateId, color: string, hasCover: boolean) {
+export function getTheme(tpl: TemplateId, color: string, hasCover: boolean) {
   const neon    = tpl === 'neon'
   const cosmic  = tpl === 'cosmic'
   const glass3d = tpl === 'glass3d'
@@ -821,7 +821,7 @@ export function SiteRenderer({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1.25rem' }}>
                 {content.benefits.map((b, i) => (
                   <div key={i} style={{
-                    background: (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : 'white',
+                    background: (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : t.vib ? 'rgba(255,255,255,0.15)' : 'white',
                     border: `1px solid ${t.border}`, borderRadius: 16, padding: '1.75rem',
                     display: 'flex', gap: '1rem', alignItems: 'flex-start',
                     backdropFilter: (t.glass || t.bold) ? 'blur(8px)' : 'none',
@@ -871,7 +871,7 @@ export function SiteRenderer({
 
         {/* ── PRECIOS ── */}
         {content.pricing && content.pricing.length > 0 && (
-          <div id="precios" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : 'white' }}>
+          <div id="precios" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : 'white' }}>
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
               <h2 className={animScrollReveal ? 'amelia-reveal' : undefined} style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem', color: sectFg,
                             fontFamily: t.eleg ? 'Georgia, serif' : 'inherit' }}>
@@ -888,7 +888,7 @@ export function SiteRenderer({
                       transitionDelay: `${i * 100}ms`,
                       background: p.highlighted
                         ? (t.neon ? `linear-gradient(135deg, ${color}25, ${color}10)` : `linear-gradient(135deg, ${color}18, ${color}08)`)
-                        : (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : t.retro ? '#fffef5' : '#f9fafb',
+                        : (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : t.vib ? 'rgba(255,255,255,0.15)' : t.retro ? '#fffef5' : '#f9fafb',
                       border: t.neon ? `1.5px solid ${p.highlighted ? color : color+'55'}` :
                               t.retro ? '3px solid #1a1a0f' :
                               p.highlighted ? `2px solid ${color}66` : `1px solid ${t.border}`,
@@ -928,7 +928,7 @@ export function SiteRenderer({
 
         {/* ── GALERÍA ── */}
         {gallery.length > 0 && (
-          <div id="galeria" style={{ padding: '4rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.02)' : 'white' }}>
+          <div id="galeria" style={{ padding: '4rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.02)' : t.vib ? 'rgba(0,0,0,0.1)' : 'white' }}>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '2.5rem', color: sectFg }}>
               {content.sectionTitles?.gallery ?? 'Nuestros trabajos'}
             </h2>
@@ -964,7 +964,7 @@ export function SiteRenderer({
                            gap: '1.25rem', maxWidth: '960px', margin: '0 auto' }}>
               {content.reviews.map((r, i) => (
                 <div key={i} style={{
-                  background: (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : 'white',
+                  background: (t.dark || t.glass || t.bold) ? 'rgba(255,255,255,0.05)' : t.vib ? 'rgba(255,255,255,0.15)' : 'white',
                   border: `1px solid ${t.border}`, borderRadius: 16, padding: '1.625rem',
                   backdropFilter: (t.glass || t.bold) ? 'blur(8px)' : 'none',
                 }}>
@@ -983,7 +983,7 @@ export function SiteRenderer({
 
         {/* ── FAQ ── */}
         {content.faq && content.faq.length > 0 && (
-          <div id="faq" style={{ padding: '5rem 2rem', position: 'relative', overflow: 'hidden', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : '#f9fafb' }}>
+          <div id="faq" style={{ padding: '5rem 2rem', position: 'relative', overflow: 'hidden', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : '#f9fafb' }}>
             {/* Animated diagonal stripes overlay */}
             <div className="amelia-stripe-bg" style={{
               backgroundImage: `repeating-linear-gradient(45deg,${color}0d 0px,${color}0d 2px,transparent 2px,transparent 14px)`,
@@ -1002,11 +1002,11 @@ export function SiteRenderer({
                   <div key={i} className={animScrollReveal ? 'amelia-reveal' : undefined} style={{ transitionDelay: `${i * 60}ms` }} dangerouslySetInnerHTML={{ __html:
                     `<div style="border:1px solid ${t.border};border-radius:12px;overflow:hidden">
                       <button onclick="var a=this.nextElementSibling;var arr=this.querySelector('span:last-child');if(a.style.display==='none'){a.style.display='block';arr.style.transform='rotate(180deg)'}else{a.style.display='none';arr.style.transform=''}"
-                        style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:1.125rem 1.375rem;background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.05)':'white'};border:none;cursor:pointer;text-align:left;gap:1rem;font-family:inherit">
+                        style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:1.125rem 1.375rem;background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.05)':t.vib?'rgba(255,255,255,0.15)':'white'};border:none;cursor:pointer;text-align:left;gap:1rem;font-family:inherit">
                         <span style="font-weight:600;font-size:0.9375rem;color:${sectFg};line-height:1.5">${item.q}</span>
                         <span style="font-size:1.125rem;color:${color};flex-shrink:0;transition:transform 0.2s">▾</span>
                       </button>
-                      <div style="display:none;padding:1rem 1.375rem 1.25rem;background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.03)':'#f9fafb'}">
+                      <div style="display:none;padding:1rem 1.375rem 1.25rem;background:${(t.dark||t.glass||t.bold)?'rgba(255,255,255,0.03)':t.vib?'rgba(255,255,255,0.1)':'#f9fafb'}">
                         <p style="color:${t.muted};font-size:0.9375rem;line-height:1.7;margin:0">${item.a}</p>
                       </div>
                     </div>`
@@ -1028,7 +1028,7 @@ export function SiteRenderer({
           const igUrl   = ig ? `https://instagram.com/${ig.replace('@','')}` : null
           const cardBg  = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.05)' : t.vib ? 'rgba(255,255,255,0.15)' : '#f9fafb'
           const cardBrd = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.1)' : '#e5e7eb'
-          const inBg    = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.06)' : '#f9fafb'
+          const inBg    = (t.dark||t.glass||t.bold||t.vib) ? 'rgba(255,255,255,0.12)' : '#f9fafb'
           const inBrd   = (t.dark||t.glass||t.bold) ? 'rgba(255,255,255,0.12)' : '#e5e7eb'
           return (
             <div id="contacto" style={{ padding: '5rem 2rem', background: t.dark ? '#0d0d14' : t.glass ? 'rgba(255,255,255,0.03)' : t.bold ? 'rgba(255,255,255,0.03)' : t.vib ? 'rgba(0,0,0,0.1)' : 'white' }}>
