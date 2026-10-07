@@ -27,8 +27,13 @@ export default async function EditorPage({
   const site = Array.isArray(business.sites) ? business.sites[0] : business.sites
   if (!site?.content) redirect('/dashboard/sitio')
 
+  const { data: dbProducts } = await supabase.from('products')
+    .select('id,name,description,price,image_url,stock')
+    .eq('business_id', business.id).order('created_at', { ascending: false })
+
   return (
     <SiteEditorClient
+      products={dbProducts ?? []}
       businessId={business.id}
       businessName={business.name}
       businessSlug={business.slug}

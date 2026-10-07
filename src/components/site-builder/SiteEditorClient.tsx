@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { SiteContent } from '@/types/database'
-import { getTheme } from './templates/SiteRenderer'
+import { getTheme, SiteRenderer, type ProductItem } from './templates/SiteRenderer'
 import { FONTS, findFont, fontUrl } from './fonts'
 
 type TemplateId = 'moderna' | 'clasica' | 'dark' | 'vibrante' | 'elegante' | 'minimalista' | 'bold' | 'sunset' | 'glass' | 'neon' | 'glass3d' | 'cosmic' | 'retro'
@@ -12,6 +12,7 @@ interface Props {
   businessId: string; businessName: string; businessSlug: string
   initialContent: SiteContent; initialColor: string; initialTemplate: string
   initialLogo: string | null; initialCover: string | null; isPublished: boolean
+  products?: ProductItem[]
 }
 
 const COLORS = ['#6366f1','#8b5cf6','#ec4899','#06b6d4','#10b981','#f59e0b','#ef4444','#1e40af','#111827','#059669']
@@ -160,7 +161,7 @@ function ServiceCard({ s, i, color, dark, vib, onChangeSvc, onUploadImg, onRemov
 
 export default function SiteEditorClient({
   businessId, businessName, businessSlug,
-  initialContent, initialColor, initialTemplate, initialLogo, initialCover, isPublished: initPublished,
+  initialContent, initialColor, initialTemplate, initialLogo, initialCover, isPublished: initPublished, products = [],
 }: Props) {
   const [content,   setContent]   = useState<SiteContent>(initialContent)
   const [name,      setName]      = useState(businessName)
@@ -174,6 +175,7 @@ export default function SiteEditorClient({
   const [logo,      setLogo]      = useState<string|null>(initialLogo)
   const [cover,     setCover]     = useState<string|null>(initialCover)
   const [gallery,   setGallery]   = useState<string[]>((initialContent.gallery??[]) as string[])
+  const [mode,      setMode]      = useState<'edit'|'preview'>('edit')
   const [viewport,  setViewport]  = useState<'desktop'|'movil'>('desktop')
   const [panel,     setPanel]     = useState<'plantilla'|'secciones'|'acciones'>('plantilla')
   const [sections,  setSections]  = useState({hero:true,nosotros:true,servicios:true,precios:true,pasos:true,beneficios:true,resenas:true,faq:true,galeria:true,contacto:true})
@@ -326,6 +328,11 @@ export default function SiteEditorClient({
             <button key={v} onClick={()=>setViewport(v)} style={{padding:'4px 12px',borderRadius:6,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,fontFamily:'Inter,sans-serif',background:viewport===v?'rgba(99,102,241,0.3)':'transparent',color:viewport===v?'#a5b4fc':'#4b4b6b'}}>
               {v==='desktop'?'Desktop':'Móvil'}
             </button>
+          ))}
+        </div>
+        <div style={{display:'flex',background:'rgba(255,255,255,0.05)',borderRadius:8,padding:2}}>
+          {([['edit','✏️ Editar'],['preview','👁 Vista previa real']] as const).map(([m,l])=>(
+            <button key={m} onClick={()=>setMode(m)} style={{padding:'4px 12px',borderRadius:6,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,fontFamily:'Inter,sans-serif',background:mode===m?'rgba(16,185,129,0.25)':'transparent',color:mode===m?'#6ee7b7':'#4b4b6b'}}>{l}</button>
           ))}
         </div>
         <span style={{fontSize:11,color:saveState==='saved'?'#10b981':saveState==='saving'?'#f59e0b':'#ef4444'}}>
@@ -714,13 +721,20 @@ export default function SiteEditorClient({
         {/* PREVIEW */}
         <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:'#1a1a2e'}} onClick={()=>fontOpen&&setFontOpen(false)}>
           <div style={{padding:'6px 16px',background:'rgba(99,102,241,0.08)',borderBottom:'1px solid rgba(99,102,241,0.15)',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            <span style={{fontSize:11,color:'rgba(165,180,252,0.7)'}}>✏ Haz clic en cualquier texto para editarlo directamente</span>
+            <span style={{fontSize:11,color:'rgba(165,180,252,0.7)'}}>{mode==='preview'?'👁 Así se verá tu sitio publicado, con tus cambios actuales (aunque no los hayas guardado)':'✏ Haz clic en cualquier texto para editarlo directamente'}</span>
           </div>
           <div style={{flex:1,overflowY:'auto',padding:20,display:'flex',justifyContent:'center',alignItems:'flex-start'}}>
             <div style={{width:viewport==='movil'?390:'100%',maxWidth:viewport==='movil'?390:960,borderRadius:12,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.6)',transition:'width 0.3s',fontFamily:font.family}}>
 
               {/* SITIO */}
-              <div style={{background:pageBg,minHeight:'100vh',color:navFg}}>
+              {mode==='preview'&&(
+                <SiteRenderer
+                  content={{...content,theme:{...(content.theme??{}),headingColor:colorH||undefined,textColor:colorT||undefined,bgColor:colorBg||undefined,fontId}}}
+                  color={color} template={template} name={name} logo={logo} cover={cover}
+                  gallery={gallery} fontFamily={font.family} slug={businessSlug} products={products}
+                />
+              )}
+              <div style={{background:pageBg,minHeight:'100vh',color:navFg,display:mode==='preview'?'none':'block'}}>
 
                 {/* NAV */}
                 <nav style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:mini?'1.25rem 3rem':'1rem 2rem',background:mini?'transparent':navBg,borderBottom:mini?'none':`1px solid ${brd}`,backdropFilter:(dark||vib)?'blur(12px)':'none',position:'sticky',top:0,zIndex:10}}>
